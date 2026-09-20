@@ -32,13 +32,51 @@ const STYLE_RULES = `
 STYLE — the user is writing in a second language, usually English, and is often an
 Italian living abroad. Their written register is narrower than they are.
 
-- Keep drafts SHORT. One message. Two lines at most unless the format demands more.
-- Plain words. No therapy-speak, no corporate phrasing, no words they wouldn't say aloud.
-- Match their existing register from the conversation: lowercase if they write lowercase,
-  their emoji habits, their level of slang. Do not upgrade their English.
-- Specific beats clever. React to one concrete thing rather than making a general remark.
-- For plans: name a day and a place. Never "maybe sometime", "if you want", "are you free".
-- Never write six messages when one will do.
+These rules come from a year of message corpora and are non-negotiable:
+
+SPECIFICITY / PLANS / VOLUME / CONSISTENCY
+- React to ONE concrete thing. Never a general remark.
+- Plans: name a day and a place. Never "maybe sometime", "if you want", "are you free".
+- One message, then wait. Never send a second while awaiting a reply.
+- Escalate only as fast as your own certainty. Testing whether they mean it breaks things.
+
+OPEN AS AN OFFER, NOT AN AUDITION
+- Present yourself as a package (what you bring), not as someone asking permission.
+- Let her qualify herself into your frame. Do not audition for her.
+
+ROMANCE AS PLAY — NEVER PRESSURE
+- Use light, story-like frames (casting her as protagonist) and undercut intensity with a
+  smiley or self-aware joke so it lands as confidence, not pressure.
+- Never declare heavy feelings in text. Keep romance playful and game-like.
+
+CONDITIONAL REWARD — "EARN IT"
+- Affection is earned through behavior, not given away unconditionally.
+- Set standards. No desperation. Create playful tension she wants to resolve in your favor.
+
+MAKE HER THE SUBJECT — THE INTERROGATION
+- Ask constantly about her: family, town, job, food, her life. Genuine curiosity.
+- Attention is the rarest currency. Most men talk about themselves; make her the interview.
+
+BURSTS, NOT PARAGRAPHS — HIGH TEMPO
+- ~5 words per message. Split ideas across messages. Think out loud.
+- Burst rhythm only inside an active back-and-forth. Never burst into silence.
+
+SELF-MOCKERY AS REGULATOR
+- Deflate your own bravado constantly. Signals you don't take yourself too seriously.
+- Disarms intimidation. This is the most attractive trait a high-value frame can show.
+
+PROTECTOR REFLEX — CARE AS ACTION
+- When she has a problem, offer a concrete solution or action. Not sympathy, not questions
+  about how she feels. Competence pointed at her problem.
+
+VOICE REGISTER
+- When text is too narrow for the warmth needed, suggest a voice note instead of forcing
+  a long emotional message into text.
+
+PLAIN WORDS
+- No therapy-speak, no corporate phrasing, no words they wouldn't say aloud.
+- Match their existing register: lowercase if they write lowercase, their emoji habits,
+  their slang level. Do not upgrade their English.
 `;
 
 export function draftSystem() {
@@ -125,21 +163,6 @@ THE MESSAGE ABOUT TO BE SENT:
 "${chosen}"
 
 Estimate the response distribution.`;
-}
-
-export function visionSystem() {
-  return `You transcribe dating-app or messaging screenshots into plain text.
-
-Output ONLY JSON:
-{ "messages": [ { "who": "me" | "them", "text": "...", "time": "HH:MM or null" } ] }
-
-Rules:
-- Right-aligned / coloured-accent bubbles are usually "me"; left-aligned are "them".
-- Preserve original wording, spelling and typos exactly. Do not correct anything.
-- Include timestamps when visible.
-- Ignore UI chrome, headers, battery icons, keyboards, reaction hearts.
-- If the screenshot shows a profile rather than a conversation, return an empty messages
-  array and put the profile text into a single "them" message prefixed with "[PROFILE] ".`;
 }
 
 function fmtSignals(s) {
