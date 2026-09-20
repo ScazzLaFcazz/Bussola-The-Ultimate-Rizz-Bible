@@ -3,6 +3,10 @@
  * These are the most trustworthy numbers in the app.
  */
 
+import {
+  wilson, decide, mannKendall, inferQuietHours, activeMinutes, logStats, median,
+} from './stats.js';
+
 export const ME = 'me';
 export const THEM = 'them';
 
@@ -65,7 +69,12 @@ export function parseConversation(raw, myNameHint = '') {
   if (out.length && out.every((m) => m.who === null)) {
     out.forEach((m, i) => (m.who = i % 2 === 0 ? THEM : ME));
   }
-  return out.filter((m) => m.text);
+
+  const clean = out.filter((m) => m.text);
+  // Appending several screenshots can leave messages out of order, which would
+  // silently drop every reversed pair from the latency stats. Sort when we can.
+  if (clean.length && clean.every((m) => m.ts)) clean.sort((a, b) => a.ts - b.ts);
+  return clean;
 }
 
 function guessWho(name, hint) {
@@ -88,12 +97,6 @@ function parseTs(date, time) {
 }
 
 /* ---------- signals ---------- */
-
-const median = (xs) => {
-  if (!xs.length) return null;
-  const s = [...xs].sort((x, y) => x - y);
-  return s[Math.floor(s.length / 2)];
-};
 
 const words = (t) => t.trim().split(/\s+/).filter(Boolean).length;
 
@@ -129,8 +132,11 @@ export function computeSignals(msgs) {
     const myAvg = s.myWords / mine.length;
     s.lengthRatio = myAvg > 0 ? (s.theirWords / theirs.length) / myAvg : null;
     s.volumeRatio = theirs.length / mine.length;
-    s.myQuestionRate = mine.filter((m) => m.text.includes('?')).length / mine.length;
-    s.theirQuestionRate = theirs.filter((m) => m.text.includes('?')).length / theirs.length;
+    // proportions carry their own uncertainty: 2-of-8 is not "25%"
+    s.myQuestionCI = wilson(mine.filter((m) => m.text.includes('?')).length, mine.length);
+    s.theirQuestionCI = wilson(theirs.filter((m) => m.text.includes('?')).length, theirs.length);
+    s.myQuestionRate = s.myQuestionCI.p;
+    s.theirQuestionRate = s.theirQuestionCI.p;
   }
 
   // bursts: consecutive runs from me with no reply
@@ -144,26 +150,29 @@ export function computeSignals(msgs) {
   }
 
   if (haveTs) {
+    // Their sleep window, inferred from hours they are never active. Without this,
+    // an overnight gap reads as a nine-hour snub.
+    s.quietHours = inferQuietHours(theirs.filter((m) => m.ts).map((m) => m.ts));
+
     const lat = { [ME]: [], [THEM]: [] };
     for (let i = 1; i < msgs.length; i++) {
       const a = msgs[i - 1], b = msgs[i];
       if (!a.ts || !b.ts || a.who === b.who) continue;
-      const mins = (b.ts - a.ts) / 60000;
+      const quiet = b.who === THEM ? s.quietHours : null;
+      const mins = activeMinutes(a.ts, b.ts, quiet);
       if (mins >= 0 && mins <= 60 * 48) lat[b.who].push(mins);
     }
     s.myMedianLatency = median(lat[ME]);
     s.theirMedianLatency = median(lat[THEM]);
+    s.theirLatencyStats = logStats(lat[THEM]);
+    s.latencySampleN = lat[THEM].length;
 
-    // trend: median of last third vs first third of their replies
-    const t = lat[THEM];
-    if (t.length >= 6) {
-      const k = Math.floor(t.length / 3);
-      const early = median(t.slice(0, k));
-      const late = median(t.slice(-k));
-      if (early !== null && late !== null) {
-        s.latencyTrend = late - early; // positive = slowing down
-      }
-    }
+    // Trend via Mann-Kendall: non-parametric, outlier-tolerant, and it reports
+    // whether the slope is distinguishable from noise at all.
+    s.latencyMK = mannKendall(lat[THEM]);
+    s.latencyTrend = s.latencyMK.significant
+      ? (s.latencyMK.direction === 'up' ? 1 : -1)
+      : null;
 
     // initiation: first message of each calendar day
     const byDay = new Map();
@@ -172,9 +181,11 @@ export function computeSignals(msgs) {
       const key = m.ts.toISOString().slice(0, 10);
       if (!byDay.has(key)) byDay.set(key, m.who);
     }
-    if (byDay.size >= 2) {
+    if (byDay.size >= 3) {
       const themFirst = [...byDay.values()].filter((w) => w === THEM).length;
-      s.initiationShare = themFirst / byDay.size;
+      s.initiationCI = wilson(themFirst, byDay.size);
+      s.initiationShare = s.initiationCI.p;
+      s.dayCount = byDay.size;
     }
   }
 
@@ -191,50 +202,49 @@ export function computeSignals(msgs) {
 export function interestRead(s) {
   const pos = [], neg = [], unknown = [];
 
-  const put = (cond, good, bad, label) => {
-    if (cond === null || cond === undefined) unknown.push(label);
-    else (cond ? pos : neg).push(cond ? good : bad);
+  const put = (verdict, good, bad, label) => {
+    if (verdict === null || verdict === undefined) unknown.push(label);
+    else (verdict ? pos : neg).push(verdict ? good : bad);
   };
 
+  // Proportions are judged by their interval, not their point estimate, so a
+  // threshold is only "crossed" when the uncertainty is on one side of it.
   put(
-    s.theirQuestionRate === null ? null : s.theirQuestionRate >= 0.12,
+    s.theirQuestionCI ? decide(s.theirQuestionCI, 0.12) : null,
     'asks you questions',
     'rarely asks you anything',
     'question rate'
   );
   put(
-    s.volumeRatio === null ? null : s.volumeRatio >= 0.7,
-    'matches your message volume',
-    'writes noticeably less than you',
-    'volume'
-  );
-  put(
-    s.lengthRatio === null ? null : s.lengthRatio >= 0.8,
-    'writes messages as long as yours',
-    'replies much shorter than your messages',
-    'length'
-  );
-  put(
-    s.initiationShare === null ? null : s.initiationShare >= 0.3,
+    s.initiationCI ? decide(s.initiationCI, 0.3) : null,
     'starts conversations too',
     'almost never messages first',
     'initiation'
   );
+
+  // Ratios have no interval, so require a margin around the threshold rather
+  // than treating 0.69 and 0.71 as opposite findings.
+  const band3 = (v, t, m) => (v === null || v === undefined ? null : v >= t + m ? true : v <= t - m ? false : null);
+  put(band3(s.volumeRatio, 0.7, 0.15), 'matches your message volume', 'writes noticeably less than you', 'volume');
+  put(band3(s.lengthRatio, 0.8, 0.2), 'writes messages as long as yours', 'replies much shorter than yours', 'length');
+
+  // Trend only counts when Mann-Kendall says it is distinguishable from noise.
   put(
-    s.latencyTrend === null ? null : s.latencyTrend <= 30,
-    'reply speed is steady or improving',
-    'replies are slowing down over time',
+    s.latencyTrend === null || s.latencyTrend === undefined ? null : s.latencyTrend < 0,
+    'reply speed is improving',
+    'replies are genuinely slowing down',
     'latency trend'
   );
 
+  const decided = pos.length + neg.length;
   let band;
-  if (pos.length >= 4) band = 'engaged';
-  else if (pos.length >= 2) band = 'warm but unclear';
-  else band = 'low signal';
+  if (decided < 3) band = 'not enough data';
+  else if (pos.length >= 4) band = 'engaged';
+  else if (pos.length > neg.length) band = 'warm but unclear';
+  else if (neg.length > pos.length) band = 'low signal';
+  else band = 'mixed';
 
-  if (pos.length + neg.length < 2) band = 'not enough data';
-
-  return { band, pos, neg, unknown };
+  return { band, pos, neg, unknown, decided };
 }
 
 /* ---------- pattern warnings ---------- */

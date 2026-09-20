@@ -9,6 +9,7 @@ import {
   STAGES, draftSystem, draftUser, matrixSystem, matrixUser,
 } from './prompts.js';
 import * as store from './store.js';
+import { wilson, calibration, decide } from './stats.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -204,13 +205,41 @@ function renderStats() {
 
   // --- telemetry rows ---
   const tele = el('div', 'telemetry');
+  const pc = (x) => `${Math.round(x * 100)}%`;
+  const overall = wilson(s.replied, s.total);
   tele.append(teleRow('Messages logged', s.total));
-  tele.append(teleRow('Got a reply', `${s.replied} (${rate}%)`, true));
+  tele.append(teleRow('Got a reply', `${s.replied} (${rate}%) [${pc(overall.lo)}–${pc(overall.hi)}]`, true));
   for (const [reg, d] of Object.entries(s.byRegister)) {
-    const r = Math.round((d.replied / d.n) * 100);
-    tele.append(teleRow(`${esc(reg)} register`, `${d.replied}/${d.n} (${r}%)`));
+    const ci = wilson(d.replied, d.n);
+    tele.append(teleRow(`${esc(reg)} register`, `${d.replied}/${d.n} [${pc(ci.lo)}–${pc(ci.hi)}]`));
   }
   box.append(tele);
+
+  // --- calibration: is the app's own forecasting any good? ---
+  const cal = calibration(store.predictionRows());
+  if (cal) {
+    const c = el('div', 'card');
+    c.style.marginTop = '16px';
+    const beatsBase = cal.brier < cal.baseline;
+    c.innerHTML =
+      `<div class="card-head"><h2>Forecast accuracy</h2>` +
+      `<span class="badge ${beatsBase ? 'measured' : 'estimate'}">${beatsBase ? 'beating base rate' : 'no better than base rate'}</span></div>` +
+      `<p class="muted small">Brier score <b>${cal.brier.toFixed(3)}</b> against a base-rate baseline of ` +
+      `<b>${cal.baseline.toFixed(3)}</b>. Lower is better; 0.25 is a coin flip.</p>`;
+    const t = el('div', 'telemetry');
+    for (const [band, d] of Object.entries(cal.byBand)) {
+      t.append(teleRow(
+        `Predicted "${band}"`,
+        `said ${pc(d.predicted)}, actual ${pc(d.actual)} (${d.replied}/${d.n})`
+      ));
+    }
+    c.append(t);
+    if (!cal.reliable) {
+      c.append(el('p', 'muted small',
+        `Only ${cal.n} forecasts scored — needs about 30 before this means anything.`));
+    }
+    box.append(c);
+  }
 
   if (s.total < 15) {
     box.append(el('p', 'muted small', `Only ${s.total} logged — treat these as a hint, not a finding. Differences need a few dozen sends to mean anything.`));
@@ -334,18 +363,44 @@ function renderSignals() {
     add('Volume ratio', s.volumeRatio.toFixed(2), s.volumeRatio >= 0.7 ? 'good' : 'bad', meter(s.volumeRatio, 1.5));
   if (s.lengthRatio !== null)
     add('Length ratio', s.lengthRatio.toFixed(2), s.lengthRatio >= 0.8 ? 'good' : 'bad', meter(s.lengthRatio, 1.5));
-  if (s.theirQuestionRate !== null)
-    add('They ask questions', pct(s.theirQuestionRate), s.theirQuestionRate >= 0.12 ? 'good' : 'bad', meter(s.theirQuestionRate, 0.4));
-  if (s.theirMedianLatency !== null) add('Their median reply', mins(s.theirMedianLatency), '', meter(Math.max(0, 120 - s.theirMedianLatency), 120), 'neutral');
-  if (s.latencyTrend !== null)
-    add('Reply trend', s.latencyTrend > 0 ? `slowing ~${mins(s.latencyTrend)}` : 'steady / faster',
-      s.latencyTrend <= 30 ? 'good' : 'bad',
-      s.latencyTrend <= 30 ? meter(30 - s.latencyTrend, 30) : meter(s.latencyTrend, 120));
-  if (s.initiationShare !== null)
-    add('They start the day', pct(s.initiationShare), s.initiationShare >= 0.3 ? 'good' : 'bad', meter(s.initiationShare, 0.6));
+  // Proportions print their interval, and go neutral when it straddles the threshold.
+  const ciRow = (label, ci, threshold, max) => {
+    if (!ci || ci.p === null) return;
+    const verdict = decide(ci, threshold);
+    add(
+      label,
+      `${pct(ci.p)} [${pct(ci.lo)}–${pct(ci.hi)}]`,
+      verdict === null ? '' : verdict ? 'good' : 'bad',
+      meter(ci.p, max),
+      verdict === null ? 'neutral' : ''
+    );
+  };
+  ciRow('They ask questions', s.theirQuestionCI, 0.12, 0.4);
+
+  if (s.theirMedianLatency !== null)
+    add(
+      `Their median reply${s.quietHours ? ' (awake hours)' : ''}`,
+      mins(s.theirMedianLatency),
+      '', meter(Math.max(0, 120 - s.theirMedianLatency), 120), 'neutral'
+    );
+  if (s.latencyMK) {
+    add(
+      'Reply trend',
+      s.latencyMK.significant
+        ? (s.latencyMK.direction === 'up' ? 'slowing down' : 'speeding up')
+        : `no trend (n=${s.latencyMK.n})`,
+      s.latencyMK.significant ? (s.latencyMK.direction === 'up' ? 'bad' : 'good') : '',
+      meter(Math.min(Math.abs(s.latencyMK.z), 4), 4),
+      s.latencyMK.significant ? '' : 'neutral'
+    );
+  }
+  ciRow('They start the day', s.initiationCI, 0.3, 0.6);
   if (s.maxBurst >= 2) add('Your longest unanswered run', `${s.maxBurst} msgs`, s.maxBurst >= 4 ? 'bad' : '', meter(s.maxBurst, 6), s.maxBurst >= 4 ? '' : 'neutral');
   if (!s.hasTimestamps)
     box.append(el('p', 'muted small', 'No timestamps found — timing signals unavailable. Paste an export with times for more.'));
+  else if (!s.quietHours && s.theirMedianLatency !== null)
+    box.append(el('p', 'muted small',
+      'Reply times include overnight gaps. Paste a longer history (~25+ of their messages) and Bussola will work out their sleep hours and subtract them.'));
 
   // animate meter fills in
   requestAnimationFrame(() => {
@@ -473,11 +528,20 @@ async function pick(i, node) {
         chosen: state.picked.text,
         stage: $('stage').value,
         signals: state.signals,
+        prior: store.baseReplyRate(),
       }),
       maxTokens: 1400,
     });
     const j = extractJson(out);
     $('matrixCaveat').textContent = j.caveat || '';
+
+    // Record what was forecast, so the app can be graded against reality later.
+    // Reply probability is read off the "no reply" row rather than invented.
+    const noReply = (j.outcomes || []).find((o) => /no reply|no response|silence|ignore/i.test(o.response || ''));
+    state.predictedBand = !noReply
+      ? 'likely'
+      : { likely: 'unlikely', possible: 'possible', unlikely: 'likely' }[noReply.band] || null;
+
     const box = $('matrix');
     box.innerHTML = '';
     let oi = 0;
@@ -500,7 +564,13 @@ function logSend(o) {
   persist();
   const t = state.thread;
   t.history = t.history || [];
-  const entry = { ts: Date.now(), sent: o.text, register: o.register, outcome: null };
+  const entry = {
+    ts: Date.now(),
+    sent: o.text,
+    register: o.register,
+    predictedBand: o.text === state.picked?.text ? state.predictedBand || null : null,
+    outcome: null,
+  };
   t.history.push(entry);
   store.upsertThread(t);
 

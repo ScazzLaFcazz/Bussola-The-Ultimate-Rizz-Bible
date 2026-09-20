@@ -150,12 +150,17 @@ Return ONLY JSON:
 Between four and six outcomes, ordered most to least likely.`;
 }
 
-export function matrixUser({ conversation, chosen, stage, signals }) {
+export function matrixUser({ conversation, chosen, stage, signals, prior }) {
   return `STAGE: ${stage}
 
 MEASURED SIGNALS:
 ${fmtSignals(signals)}
-
+${prior ? `
+THE USER'S OWN MEASURED BASE RATE:
+Across ${prior.n} logged messages, ${Math.round(prior.rate * 100)}% got a reply.
+Anchor your estimate to this. Depart from it only for reasons visible in this
+specific thread, and say which reason when you do.
+` : ''}
 CONVERSATION SO FAR:
 ${conversation}
 

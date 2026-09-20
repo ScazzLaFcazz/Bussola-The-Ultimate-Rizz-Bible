@@ -78,3 +78,25 @@ export function outcomeStats() {
   }
   return { total: logged.length, replied, byRegister };
 }
+
+/**
+ * Rows where the app predicted a band before you sent, paired with what
+ * actually happened. This is what lets the app grade its own forecasts
+ * instead of asking you to trust them.
+ */
+export function predictionRows() {
+  return getThreads()
+    .flatMap((t) => t.history || [])
+    .filter((r) => r.outcome && r.predictedBand)
+    .map((r) => ({ band: r.predictedBand, replied: r.outcome === 'replied' }));
+}
+
+/** Your measured base reply rate, fed to the model as a prior. Null until n>=10. */
+export function baseReplyRate() {
+  const rows = getThreads().flatMap((t) => t.history || []).filter((r) => r.outcome);
+  if (rows.length < 10) return null;
+  return {
+    rate: rows.filter((r) => r.outcome === 'replied').length / rows.length,
+    n: rows.length,
+  };
+}

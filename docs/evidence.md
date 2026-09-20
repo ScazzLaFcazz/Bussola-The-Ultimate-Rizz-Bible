@@ -1,6 +1,6 @@
-﻿# What this tool claims, and what it doesn't
+# What this tool claims, and what it doesn't
 
-Bussola is built on two kinds of observation: measured signals from real conversations, and evidence from relationship science. It's also calibrated to someone real ÔÇö a 24-year-old Italian expat dating abroad in English. His patterns are woven throughout.
+Bussola is built on two kinds of observation: measured signals from real conversations, and evidence from relationship science. It's also calibrated to someone real — a 24-year-old Italian expat dating abroad in English. His patterns are woven throughout.
 
 ## Measured (green badge)
 
@@ -8,16 +8,16 @@ Arithmetic on your own thread, computed in your browser with no model involved:
 reply latency and its trend, message-length ratio, volume ratio, question rate,
 initiation share, unanswered-run length.
 
-These are facts about your conversation. They can still mislead ÔÇö someone can be busy
-rather than uninterested ÔÇö but the numbers themselves are not invented.
+These are facts about your conversation. They can still mislead — someone can be busy
+rather than uninterested — but the numbers themselves are not invented.
 
 ## Estimated (amber badge)
 
 The response matrix. A language model guessing how one specific person might react to
 one specific message, from a short text sample.
 
-This is genuinely uncertain, so the app uses three coarse bands ÔÇö **likely** (~40ÔÇô70%),
-**possible** (~15ÔÇô40%), **unlikely** (~5ÔÇô15%) ÔÇö and never a precise percentage. It always
+This is genuinely uncertain, so the app uses three coarse bands — **likely** (~40–70%),
+**possible** (~15–40%), **unlikely** (~5–15%) — and never a precise percentage. It always
 includes "no reply" when plausible.
 
 Any tool that gives you "73% chance she replies" about a stranger is selling you a feeling
@@ -29,24 +29,24 @@ of control, not a measurement.
 
 A reasonable question: why doesn't this model "how women think"?
 
-Partly because it wouldn't work ÔÇö you are talking to one person, not a population, and
+Partly because it wouldn't work — you are talking to one person, not a population, and
 between-group averages tell you almost nothing about an individual. Partly because the
 literature usually cited for it doesn't support the claim.
 
 Four papers frequently invoked in this area:
 
-**Markovits, Tr├®moli├¿re & Blanchette (2018),** *Cognition* 170:76ÔÇô82 ÔÇö "Reasoning strategies
+**Markovits, Trémolière & Blanchette (2018),** *Cognition* 170:76–82 — "Reasoning strategies
 modulate gender differences in emotion processing." Gender differences in emotional
 reactivity appeared **only among participants using a statistical reasoning strategy**, and
 were **entirely absent among counterexample reasoners**. Strategy moderates the effect; gender
 alone doesn't predict it.
 
-**Chen et al. (2018),** *Frontiers in Human Neuroscience* 12:275 ÔÇö Females showed greater
+**Chen et al. (2018),** *Frontiers in Human Neuroscience* 12:275 — Females showed greater
 sensitivity to opponents' facial emotion in an interpersonal gambling task (reduced RewP and
 feedback P300 amplitude). This one *does* report a female-sensitivity effect. It is a lab task
 with a student sample, and it measures reaction to face stimuli, not relationship behaviour.
 
-**Barrett, Robin, Pietromonaco & Eyssell (1998),** *Cognition & Emotion* 12(4):555ÔÇô578 ÔÇö "Are
+**Barrett, Robin, Pietromonaco & Eyssell (1998),** *Cognition & Emotion* 12(4):555–578 — "Are
 Women the 'More Emotional' Sex?" Participants gave global retrospective self-descriptions, then
 a week of momentary ratings. Sex differences appeared **in the global self-descriptions but not
 in the averaged momentary ratings**. The only context that produced a difference was the sex of
@@ -55,7 +55,7 @@ conclusion is that the findings "present certain caveats to the widely held beli
 are the 'more emotional' sex."
 
 **Kerr (2021),** "Emotions, Rationality, and Gender," in *Gender Equality* (Encyclopedia of the
-UN SDGs), Springer, 202ÔÇô212 ÔÇö A conceptual argument that the emotion/rationality opposition,
+UN SDGs), Springer, 202–212 — A conceptual argument that the emotion/rationality opposition,
 with emotion coded female and rationality male, is a cultural inheritance rather than a finding,
 and that emotions are constitutive of rationality for everyone.
 
@@ -74,15 +74,15 @@ actual thread instead of asking you how it's going.
 
 Bussola is calibrated to someone specific: an Italian living abroad, writing in English (his second language), dating across Europe. His patterns appear throughout the code.
 
-**His register:** Direct, teasing, lowercase. Short sentences. Mock-accusatory when opening. Emoji like ­ƒÑÇ to soften something blunt. Never apologizing before being asked.
+**His register:** Direct, teasing, lowercase. Short sentences. Mock-accusatory when opening. Emoji like 🥀 to soften something blunt. Never apologizing before being asked.
 
 **How he opens:** His successful openers react to one concrete thing in a profile, not a general compliment. **Specific beats clever. Always.** The ones that introduce him and wait for a response reliably fail.
 
-**How he escalates:** He commits fast ÔÇö within hours of first contact, he's framing things in terms of commitment and conditions. This pattern repeats consistently, suggesting it's his baseline rather than situational.
+**How he escalates:** He commits fast — within hours of first contact, he's framing things in terms of commitment and conditions. This pattern repeats consistently, suggesting it's his baseline rather than situational.
 
-**The pattern that recurs:** He asks questions to test whether something is real, then immediately undermines the answer. This creates a cycle: escalate ÔåÆ test ÔåÆ destabilise ÔåÆ escalate harder. This pattern shows up across multiple relationships at different scales, proving it's portable and stable.
+**The pattern that recurs:** He asks questions to test whether something is real, then immediately undermines the answer. This creates a cycle: escalate → test → destabilise → escalate harder. This pattern shows up across multiple relationships at different scales, proving it's portable and stable.
 
-**Why text reads different from voice:** He's warm and articulate in voice ÔÇö capable of extended, unguarded, funny monologue. But text in English at night (when tired, writing in his second language) compresses his register to blunt statements. This gap between channels is measurable in the data but invisible to him.
+**Why text reads different from voice:** He's warm and articulate in voice — capable of extended, unguarded, funny monologue. But text in English at night (when tired, writing in his second language) compresses his register to blunt statements. This gap between channels is measurable in the data but invisible to him.
 
 **The load problem:** Analysis of his broader messaging shows everything goes into whoever he's dating. That person becomes the sole recipient of his expressive output, which loads her with the entire emotional weight before week three.
 
@@ -99,5 +99,5 @@ Things that reliably matter, and that this tool acts on:
 - **Volume discipline.** One message and a wait beats four and a wait.
 - **Consistency.** Escalating faster than your own certainty, then testing whether the other person means it, is the most reliable way to end something that was working.
 
-None of that is about gender. It's about being legible, specific and steady ÔÇö which is harder
+None of that is about gender. It's about being legible, specific and steady — which is harder
 in a second language, which is the actual problem this tool exists to solve.
