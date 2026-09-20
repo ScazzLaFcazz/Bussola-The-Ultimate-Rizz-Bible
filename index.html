@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bussola — a conversation compass</title>
+<meta name="description" content="A browser-only writing assistant for dating in a second language. Nothing leaves your machine." />
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="logo">🧭</span> <strong>Bussola</strong></div>
+  <nav>
+    <button data-view="work" class="tab active">Compose</button>
+    <button data-view="threads" class="tab">Threads</button>
+    <button data-view="stats" class="tab">Stats</button>
+    <button data-view="settings" class="tab">Settings</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ======================= COMPOSE ======================= -->
+<section id="view-work" class="view active">
+
+  <div class="grid">
+    <div class="col">
+      <div class="card">
+        <div class="card-head">
+          <h2>Conversation</h2>
+          <select id="threadPicker" class="mini"></select>
+        </div>
+
+        <div class="row">
+          <input id="threadName" class="mini grow" placeholder="Who is this? (local label)" />
+          <select id="stage" class="mini"></select>
+        </div>
+
+        <textarea id="convo" rows="12" spellcheck="false"
+          placeholder="Paste the conversation.
+
+Formats that work:
+  me: hey
+  her: hi :)
+
+or a WhatsApp export, or just alternating lines."></textarea>
+
+        <div class="row wrap">
+          <label class="btn ghost">
+            📷 Screenshot
+            <input type="file" id="shot" accept="image/*" hidden />
+          </label>
+          <button id="analyze" class="btn ghost">Analyse</button>
+          <input id="notes" class="mini grow" placeholder="Context worth knowing (optional)" />
+        </div>
+        <div id="shotStatus" class="muted small"></div>
+      </div>
+
+      <div class="card" id="signalsCard" hidden>
+        <div class="card-head">
+          <h2>Signals</h2>
+          <span class="badge measured">measured locally</span>
+        </div>
+        <div id="signals"></div>
+        <div id="patterns"></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="card-head"><h2>Drafts</h2></div>
+        <button id="draft" class="btn primary wide">Suggest three replies</button>
+        <div id="gate" class="gate" hidden></div>
+        <div id="read" class="read" hidden></div>
+        <div id="options"></div>
+      </div>
+
+      <div class="card" id="matrixCard" hidden>
+        <div class="card-head">
+          <h2>If you send that</h2>
+          <span class="badge estimate">model estimate</span>
+        </div>
+        <p class="muted small" id="matrixCaveat"></p>
+        <div id="matrix"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= THREADS ======================= -->
+<section id="view-threads" class="view">
+  <div class="card">
+    <div class="card-head">
+      <h2>Threads</h2>
+      <button id="newThread" class="btn ghost mini">New</button>
+    </div>
+    <div id="threadList"></div>
+  </div>
+</section>
+
+<!-- ======================= STATS ======================= -->
+<section id="view-stats" class="view">
+  <div class="card">
+    <div class="card-head">
+      <h2>Your outcomes</h2>
+      <span class="badge measured">measured</span>
+    </div>
+    <p class="muted small">
+      Log whether each message got a reply and this becomes real data about what works
+      for <em>you</em> — which is the only sample that matters.
+    </p>
+    <div id="stats"></div>
+  </div>
+</section>
+
+<!-- ======================= SETTINGS ======================= -->
+<section id="view-settings" class="view">
+  <div class="card">
+    <div class="card-head"><h2>Model</h2></div>
+    <label>Provider
+      <select id="provider"></select>
+    </label>
+    <p class="muted small" id="providerNote"></p>
+    <label>Base URL <input id="base" spellcheck="false" /></label>
+    <label>Model <input id="model" spellcheck="false" /></label>
+    <label>API key <input id="key" type="password" spellcheck="false" autocomplete="off" /></label>
+    <label>Draft language
+      <input id="lang" placeholder="e.g. English, Polish, Italian — blank = match the conversation" />
+    </label>
+    <div class="row">
+      <button id="save" class="btn primary">Save</button>
+      <button id="test" class="btn ghost">Test connection</button>
+    </div>
+    <div id="saveStatus" class="muted small"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Your data</h2></div>
+    <p class="muted small">
+      Everything lives in this browser's localStorage. Your key is sent only to the provider
+      you chose. There is no backend and no analytics.
+    </p>
+    <div class="row">
+      <button id="export" class="btn ghost">Export JSON</button>
+      <button id="wipe" class="btn danger">Delete everything</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>What this won't do</h2></div>
+    <ul class="plain">
+      <li>Write to someone who said no, asked for space, or stopped replying.</li>
+      <li>Manufacture jealousy, urgency or scarcity as leverage.</li>
+      <li>Anything involving a minor.</li>
+      <li>Impersonate anyone.</li>
+      <li>Model "how women think" — it reads one conversation, not a gender.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Runs entirely in your browser.</span>
+  <span class="dot">·</span>
+  <span>Signals are measured. Response odds are estimates.</span>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
