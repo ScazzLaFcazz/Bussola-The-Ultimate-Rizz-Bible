@@ -3,8 +3,8 @@
 **A conversation compass for dating in a language and culture that isn't yours.**
 
 Bussola is a static, browser-only assistant for people dating abroad — built for Italian
-expats, useful to anyone writing in a second language. You paste a conversation (or drop a
-screenshot), and it gives you three ways to reply, an estimate of how each is likely to land,
+expats, useful to anyone writing in a second language. You paste a conversation, and it gives
+you three ways to reply, an estimate of how each is likely to land,
 and a running read of where the conversation actually stands.
 
 It runs entirely in your browser. No backend, no accounts, no telemetry. Your API key and
@@ -36,8 +36,7 @@ Bussola is built around three things that actually move outcomes:
 ## What it does
 
 ### 1. Read the conversation
-Paste the text or upload a screenshot. Screenshots are sent to a vision-capable model of your
-choosing; pasted text is parsed locally.
+Paste the text. It is parsed locally in your browser.
 
 ### 2. Local signal analysis — measured, not guessed
 Computed in your browser with no model involved:
@@ -108,12 +107,12 @@ Other people's messages are other people's. Keep the export local; don't publish
 
 ## Providers
 
-| Provider | Vision | Notes |
-|---|---|---|
-| Ollama | depends on model | Local, private. Needs `OLLAMA_ORIGINS` set for browser access |
-| OpenRouter | yes | Easiest for trying several models |
-| Anthropic | yes | Requires `anthropic-dangerous-direct-browser-access` |
-| OpenAI | yes | Standard browser CORS support |
+| Provider | Notes |
+|---|---|
+| Ollama | Local, private. Needs `OLLAMA_ORIGINS` set for browser access |
+| OpenRouter | Easiest for trying several models |
+| Anthropic | Requires `anthropic-dangerous-direct-browser-access` |
+| OpenAI | Standard browser CORS support |
 
 ---
 
