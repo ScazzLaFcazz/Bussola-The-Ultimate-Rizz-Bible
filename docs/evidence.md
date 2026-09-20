@@ -1,6 +1,6 @@
 # What this tool claims, and what it doesn't
 
-Bussola makes two kinds of statement, and keeps them visually separate in the UI.
+Bussola is built on two kinds of observation: measured signals from real conversations, and evidence from relationship science. It's also calibrated to someone real — a 24-year-old Italian expat dating abroad in English. His patterns are woven throughout.
 
 ## Measured (green badge)
 
@@ -70,6 +70,26 @@ actual thread instead of asking you how it's going.
 
 ---
 
+## The user this was built for
+
+Bussola is calibrated to someone specific: an Italian living abroad, writing in English (his second language), dating across Europe. His patterns appear throughout the code.
+
+**His register:** Direct, teasing, lowercase. Short sentences. Mock-accusatory when opening. Emoji like 🥀 to soften something blunt. Never apologizing before being asked.
+
+**How he opens:** His successful openers react to one concrete thing in a profile, not a general compliment. **Specific beats clever. Always.** The ones that introduce him and wait for a response reliably fail.
+
+**How he escalates:** He commits fast — within hours of first contact, he's framing things in terms of commitment and conditions. This pattern repeats consistently, suggesting it's his baseline rather than situational.
+
+**The pattern that recurs:** He asks questions to test whether something is real, then immediately undermines the answer. This creates a cycle: escalate → test → destabilise → escalate harder. This pattern shows up across multiple relationships at different scales, proving it's portable and stable.
+
+**Why text reads different from voice:** He's warm and articulate in voice — capable of extended, unguarded, funny monologue. But text in English at night (when tired, writing in his second language) compresses his register to blunt statements. This gap between channels is measurable in the data but invisible to him.
+
+**The load problem:** Analysis of his broader messaging shows everything goes into whoever he's dating. That person becomes the sole recipient of his expressive output, which loads her with the entire emotional weight before week three.
+
+**Why the tool works for him:** The specificity rule (react to one concrete thing) matches his successful openers exactly. The "no burst" rule (stop after one unanswered message) contradicts his instinct to send multiple, which is when things break. The pattern warnings catch the exact moves that recur. The response matrix uses bands instead of false precision, which suits someone who overthinks odds but needs to act anyway.
+
+---
+
 ## The honest summary
 
 Things that reliably matter, and that this tool acts on:
@@ -77,8 +97,7 @@ Things that reliably matter, and that this tool acts on:
 - **Specificity.** Reacting to one concrete thing beats a general remark.
 - **Unambiguous plans.** A named day and place beats "maybe sometime".
 - **Volume discipline.** One message and a wait beats four and a wait.
-- **Consistency.** Escalating faster than your own certainty, then testing whether the other
-  person means it, is the most reliable way to end something that was working.
+- **Consistency.** Escalating faster than your own certainty, then testing whether the other person means it, is the most reliable way to end something that was working.
 
 None of that is about gender. It's about being legible, specific and steady — which is harder
 in a second language, which is the actual problem this tool exists to solve.
