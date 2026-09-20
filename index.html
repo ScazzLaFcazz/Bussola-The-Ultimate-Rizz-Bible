@@ -11,13 +11,20 @@
 <body>
 
 <header class="top">
-  <div class="brand"><span class="logo">🧭</span> <strong>Bussola</strong></div>
-  <nav>
-    <button data-view="work" class="tab active">Compose</button>
-    <button data-view="threads" class="tab">Threads</button>
-    <button data-view="stats" class="tab">Stats</button>
-    <button data-view="settings" class="tab">Settings</button>
+  <div class="brand"><span class="logo">🧭</span> <strong>Bussola</strong><span class="brand-tag">control room</span></div>
+
+  <nav class="modes" role="tablist" aria-label="View">
+    <button data-view="work" class="tab active" role="tab">Compose</button>
+    <button data-view="threads" class="tab" role="tab">Threads</button>
+    <button data-view="stats" class="tab" role="tab">Stats</button>
+    <button data-view="settings" class="tab" role="tab">Settings</button>
   </nav>
+
+  <div class="status-rack" id="statusRack" aria-live="polite">
+    <span class="status-item"><span class="status-dot" data-state="idle"></span><span class="status-label" id="statusThread">no thread</span></span>
+    <span class="status-item"><span class="status-label" id="statusMsgs">0 msgs</span></span>
+    <span class="status-item env"><span class="status-dot" data-state="local"></span>LOCAL · NO SERVER</span>
+  </div>
 </header>
 
 <main>
@@ -27,7 +34,7 @@
 
   <div class="grid">
     <div class="col">
-      <div class="card">
+      <div class="card panel" data-panel="conversation">
         <div class="card-head">
           <h2>Conversation</h2>
           <select id="threadPicker" class="mini"></select>
@@ -48,36 +55,32 @@ Formats that work:
 or a WhatsApp export, or just alternating lines."></textarea>
 
         <div class="row wrap">
-          <label class="btn ghost">
-            📷 Screenshot
-            <input type="file" id="shot" accept="image/*" hidden />
-          </label>
           <button id="analyze" class="btn ghost">Analyse</button>
           <input id="notes" class="mini grow" placeholder="Context worth knowing (optional)" />
         </div>
-        <div id="shotStatus" class="muted small"></div>
       </div>
 
-      <div class="card" id="signalsCard" hidden>
+      <div class="card panel" id="signalsCard" data-panel="signals" hidden>
         <div class="card-head">
           <h2>Signals</h2>
           <span class="badge measured">measured locally</span>
         </div>
-        <div id="signals"></div>
+        <div id="readBand" class="readout" hidden></div>
+        <div id="signals" class="signal-rack"></div>
         <div id="patterns"></div>
       </div>
     </div>
 
     <div class="col">
-      <div class="card">
+      <div class="card panel" data-panel="drafts">
         <div class="card-head"><h2>Drafts</h2></div>
         <button id="draft" class="btn primary wide">Suggest three replies</button>
         <div id="gate" class="gate" hidden></div>
-        <div id="read" class="read" hidden></div>
+        <div id="read" class="readout draft-read" hidden></div>
         <div id="options"></div>
       </div>
 
-      <div class="card" id="matrixCard" hidden>
+      <div class="card panel" id="matrixCard" data-panel="matrix" hidden>
         <div class="card-head">
           <h2>If you send that</h2>
           <span class="badge estimate">model estimate</span>
@@ -91,7 +94,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
 
 <!-- ======================= THREADS ======================= -->
 <section id="view-threads" class="view">
-  <div class="card">
+  <div class="card panel" data-panel="threads">
     <div class="card-head">
       <h2>Threads</h2>
       <button id="newThread" class="btn ghost mini">New</button>
@@ -102,7 +105,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
 
 <!-- ======================= STATS ======================= -->
 <section id="view-stats" class="view">
-  <div class="card">
+  <div class="card panel" data-panel="stats">
     <div class="card-head">
       <h2>Your outcomes</h2>
       <span class="badge measured">measured</span>
@@ -117,7 +120,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
 
 <!-- ======================= SETTINGS ======================= -->
 <section id="view-settings" class="view">
-  <div class="card">
+  <div class="card panel" data-panel="model">
     <div class="card-head"><h2>Model</h2></div>
     <label>Provider
       <select id="provider"></select>
@@ -136,7 +139,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
     <div id="saveStatus" class="muted small"></div>
   </div>
 
-  <div class="card">
+  <div class="card panel" data-panel="data">
     <div class="card-head"><h2>Your data</h2></div>
     <p class="muted small">
       Everything lives in this browser's localStorage. Your key is sent only to the provider
@@ -148,7 +151,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card panel" data-panel="limits">
     <div class="card-head"><h2>What this won't do</h2></div>
     <ul class="plain">
       <li>Write to someone who said no, asked for space, or stopped replying.</li>
