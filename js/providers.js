@@ -8,7 +8,7 @@ export const PROVIDERS = {
     label: 'Ollama (local)',
     needsKey: false,
     defaultBase: 'http://localhost:11434',
-    defaultModel: 'llama3.2-vision',
+    defaultModel: 'llama3.2',
     note: 'Fully local. Start Ollama with OLLAMA_ORIGINS="*" so the browser can reach it.',
   },
   openrouter: {
