@@ -1,7 +1,7 @@
 /* app.js — wiring. Control-room edition. */
 
 import {
-  parseConversation, computeSignals, interestRead,
+  parseConversation, computeSignals,
   detectPatterns, safetyGate, ME, THEM,
 } from './signals.js';
 import { PROVIDERS, complete, extractJson } from './providers.js';
@@ -10,7 +10,7 @@ import {
   loadRubric, readingSystem, readingUser,
 } from './prompts.js';
 import * as store from './store.js';
-import { wilson, calibration, decide } from './stats.js';
+import { wilson, calibration } from './stats.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -409,35 +409,37 @@ function analyse({ withAI = false } = {}) {
   const raw = $('convo').value;
   state.msgs = parseConversation(raw);
   if (!state.msgs.length) {
-    $('signalsCard').hidden = true;
     $('aiReadCard').hidden = true;
     updateStatusRack();
     return;
   }
+  // Computed but never displayed. Models mis-count reply gaps across dozens of
+  // timestamps, so these go to the model as reference figures rather than being
+  // left for it to derive. The reading itself is entirely the model's.
   state.signals = computeSignals(state.msgs);
   state.patterns = detectPatterns(state.signals, state.msgs);
-  renderSignals();
   persist();
   if (withAI) aiRead();
 }
 
-/**
- * The model's reading, kept in its own panel. The arithmetic runs first and always,
- * so a missing key or a failed call costs you the interpretation, never the numbers.
- */
+/** The reading. This is the Signals panel now — there is no local one. */
 async function aiRead() {
   const card = $('aiReadCard');
   const box = $('aiRead');
   const c = cfg();
-  if (PROVIDERS[c.provider].needsKey && !c.key) {
-    card.hidden = true;
-    return;
-  }
 
+  // The safety gate stays local on purpose: it must not depend on a network call.
   const blocked = safetyGate(state.msgs);
   if (blocked) {
     card.hidden = false;
     box.innerHTML = `<div class="gate">${esc(blocked)}</div>`;
+    return;
+  }
+
+  if (PROVIDERS[c.provider].needsKey && !c.key) {
+    card.hidden = false;
+    box.innerHTML =
+      '<div class="gate">Signals are read by the model, so this needs an API key. Add one in Settings.</div>';
     return;
   }
 
@@ -502,110 +504,6 @@ function renderAIRead(j) {
 $('analyze').addEventListener('click', () => analyse({ withAI: true }));
 $('convo').addEventListener('blur', analyse);
 
-function renderSignals() {
-  const s = state.signals;
-  const read = interestRead(s);
-  const box = $('signals');
-  box.innerHTML = '';
-  $('signalsCard').hidden = false;
-
-  // --- prominent readout band ---
-  const readout = $('readBand');
-  readout.hidden = false;
-  readout.setAttribute('data-band', read.band);
-  const chips =
-    read.pos.map((p) => `<span class="chip pos">+ ${esc(p)}</span>`).join('') +
-    read.neg.map((p) => `<span class="chip neg">− ${esc(p)}</span>`).join('') +
-    read.unknown.map((p) => `<span class="chip unk">? ${esc(p)}</span>`).join('');
-  readout.innerHTML =
-    `<div class="readout-band">${esc(read.band)}</div>` +
-    `<div class="readout-detail">${read.pos.length} positive · ${read.neg.length} negative · ${read.unknown.length} unknown</div>` +
-    (chips ? `<div class="readout-chips">${chips}</div>` : '');
-
-  const pct = (x) => `${Math.round(x * 100)}%`;
-  const mins = (x) => (x < 60 ? `${Math.round(x)} min` : `${(x / 60).toFixed(1)} h`);
-
-  // meter helper: normalize a 0..1-ish value to a 0..100 width
-  const meter = (x, max) => Math.max(2, Math.min(100, (x / max) * 100));
-
-  let i = 0;
-  const add = (label, val, cls, fillPct, fillCls) => {
-    const node = el('div', 'sig ' + (cls || ''));
-    node.style.animationDelay = `${i * 50}ms`;
-    node.innerHTML =
-      `<span class="label">${label}</span>` +
-      `<span class="v">${val}</span>` +
-      (fillPct !== undefined
-        ? `<span class="meter"><span class="meter-fill ${fillCls || ''}" data-w="${fillPct}%"></span></span>`
-        : '');
-    box.append(node);
-    i++;
-  };
-
-  add('Messages (you / them)', `${s.myCount} / ${s.theirCount}`, '', meter(s.myCount + s.theirCount, 20), 'neutral');
-  if (s.volumeRatio !== null)
-    add('Volume ratio', s.volumeRatio.toFixed(2), s.volumeRatio >= 0.7 ? 'good' : 'bad', meter(s.volumeRatio, 1.5));
-  if (s.lengthRatio !== null)
-    add('Length ratio', s.lengthRatio.toFixed(2), s.lengthRatio >= 0.8 ? 'good' : 'bad', meter(s.lengthRatio, 1.5));
-  // Proportions print their interval, and go neutral when it straddles the threshold.
-  const ciRow = (label, ci, threshold, max) => {
-    if (!ci || ci.p === null) return;
-    const verdict = decide(ci, threshold);
-    add(
-      label,
-      `${pct(ci.p)} [${pct(ci.lo)}–${pct(ci.hi)}]`,
-      verdict === null ? '' : verdict ? 'good' : 'bad',
-      meter(ci.p, max),
-      verdict === null ? 'neutral' : ''
-    );
-  };
-  ciRow('They ask questions', s.theirQuestionCI, 0.12, 0.4);
-
-  if (s.theirMedianLatency !== null)
-    add(
-      `Their median reply${s.quietHours ? ' (awake hours)' : ''}`,
-      mins(s.theirMedianLatency),
-      '', meter(Math.max(0, 120 - s.theirMedianLatency), 120), 'neutral'
-    );
-  if (s.latencyMK) {
-    add(
-      'Reply trend',
-      s.latencyMK.significant
-        ? (s.latencyMK.direction === 'up' ? 'slowing down' : 'speeding up')
-        : `no trend (n=${s.latencyMK.n})`,
-      s.latencyMK.significant ? (s.latencyMK.direction === 'up' ? 'bad' : 'good') : '',
-      meter(Math.min(Math.abs(s.latencyMK.z), 4), 4),
-      s.latencyMK.significant ? '' : 'neutral'
-    );
-  }
-  ciRow('They start the day', s.initiationCI, 0.3, 0.6);
-  if (s.maxBurst >= 2) add('Your longest unanswered run', `${s.maxBurst} msgs`, s.maxBurst >= 4 ? 'bad' : '', meter(s.maxBurst, 6), s.maxBurst >= 4 ? '' : 'neutral');
-  if (!s.hasTimestamps)
-    box.append(el('p', 'muted small', 'No timestamps found — timing signals unavailable. Paste an export with times for more.'));
-  else if (!s.quietHours && s.theirMedianLatency !== null)
-    box.append(el('p', 'muted small',
-      'Reply times include overnight gaps. Paste a longer history (~25+ of their messages) and Bussola will work out their sleep hours and subtract them.'));
-
-  // animate meter fills in
-  requestAnimationFrame(() => {
-    box.querySelectorAll('.meter-fill').forEach((m) => {
-      m.style.width = m.dataset.w;
-    });
-  });
-
-  // --- pattern warnings as alert lights ---
-  const pb = $('patterns');
-  pb.innerHTML = '';
-  state.patterns.forEach((p, idx) => {
-    const w = el('div', 'warn');
-    w.style.animationDelay = `${idx * 70}ms`;
-    w.innerHTML =
-      `<span class="alert-light"></span>` +
-      `<div><div class="t">${esc(p.label)}</div><div>${esc(p.why)}</div>` +
-      `<div class="muted small" style="margin-top:4px">${esc(p.advice)}</div></div>`;
-    pb.append(w);
-  });
-}
 
 /* ---------------- drafting ---------------- */
 

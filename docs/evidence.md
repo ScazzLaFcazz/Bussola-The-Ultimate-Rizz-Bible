@@ -2,16 +2,29 @@
 
 Bussola is built on two kinds of observation: measured signals from real conversations, and evidence from relationship science. It's also calibrated to someone real — a 24-year-old Italian expat dating abroad in English. His patterns are woven throughout.
 
-## Measured (green badge)
+## What is computed, and what is judged
 
-Arithmetic on your own thread, computed in your browser with no model involved:
-reply latency and its trend, message-length ratio, volume ratio, question rate,
-initiation share, unanswered-run length.
+Reply latency, message-length and volume ratios, question rate, initiation share and
+unanswered-run length are computed in your browser by arithmetic. They are handed to the
+model as reference figures rather than displayed as a verdict of their own, because a
+language model asked to count reply gaps across dozens of timestamps will drift.
 
-These are facts about your conversation. They can still mislead — someone can be busy
-rather than uninterested — but the numbers themselves are not invented.
+Three things that arithmetic does, which stop the reading being built on noise:
 
-## Estimated (amber badge)
+**Sleep is subtracted from reply times.** A histogram of when someone is active locates
+the longest run of hours holding under 2% of their messages, and latency is measured in
+waking hours only. Without this, going to bed looks like a nine-hour snub — the single
+largest source of false coldness in raw message data.
+
+**Proportions carry confidence intervals.** "She asks questions 25% of the time" means
+nothing if that is 2 messages out of 8. Every proportion is a Wilson score interval.
+
+**Trends need a significance test.** Reply-time drift uses Mann-Kendall — non-parametric,
+so one 20-hour outlier cannot manufacture a slope. Below n=8 it reports no trend.
+
+The interpretation on top of all of this is the model's, and is labelled as an estimate.
+
+## The reading itself (amber badge)
 
 The response matrix. A language model guessing how one specific person might react to
 one specific message, from a short text sample.

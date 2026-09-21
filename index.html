@@ -60,24 +60,14 @@ or a WhatsApp export, or just alternating lines."></textarea>
         </div>
       </div>
 
-      <div class="card panel" id="signalsCard" data-panel="signals" hidden>
+      <div class="card panel" id="aiReadCard" data-panel="signals" hidden>
         <div class="card-head">
           <h2>Signals</h2>
-          <span class="badge measured">measured locally</span>
-        </div>
-        <div id="readBand" class="readout" hidden></div>
-        <div id="signals" class="signal-rack"></div>
-        <div id="patterns"></div>
-      </div>
-
-      <div class="card panel" id="aiReadCard" data-panel="ai-read" hidden>
-        <div class="card-head">
-          <h2>AI reading</h2>
-          <span class="badge estimate">model estimate</span>
+          <span class="badge estimate">AI reading</span>
         </div>
         <p class="muted small">
           Read against <a href="docs/signals.md" target="_blank" rel="noopener">the rubric</a>,
-          which you can audit. The arithmetic above is what it must not contradict.
+          which you can audit and edit.
         </p>
         <div id="aiRead"></div>
       </div>
@@ -180,7 +170,7 @@ or a WhatsApp export, or just alternating lines."></textarea>
 <footer class="foot">
   <span>Runs entirely in your browser.</span>
   <span class="dot">·</span>
-  <span>Signals are measured. Response odds are estimates.</span>
+  <span>Signals and response odds are model estimates.</span>
 </footer>
 
 <script type="module" src="js/app.js"></script>

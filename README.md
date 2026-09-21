@@ -38,37 +38,19 @@ Bussola is built around three things that actually move outcomes:
 ### 1. Read the conversation
 Paste the text. It is parsed locally in your browser.
 
-### 2. Local signal analysis — measured, not guessed
-Computed in your browser with no model involved:
+### 2. Signals — read by the model
 
-| Signal | What it measures |
-|---|---|
-| Reply latency trend | Is she replying faster or slower than her own baseline? |
-| Message length ratio | Who is writing more, and is that changing? |
-| Initiation share | Who starts conversations? |
-| Question rate | Is she asking about you, or only answering? |
-| Escalation response | What happens when warmth goes up? |
-| Burst ratio | How often do you send multiple unanswered messages? |
+Press **Analyse** and the thread is read by your chosen model against
+[`docs/signals.md`](docs/signals.md), the full rubric for reading a conversation. That
+rubric is a file in this repo, not a hidden prompt: you can check exactly what the model
+was told, and change it.
 
-These are arithmetic on your own thread. They are the most trustworthy numbers in the app.
+You get ranked signals with the evidence each one rests on, a stated confidence with the
+reason for it, and — always — the strongest case *against* the reading.
 
-### 2b. AI reading — against a rubric you can read
-
-Pressing **Analyse** runs the arithmetic first, then sends the thread to your model along
-with [`docs/signals.md`](docs/signals.md) — the full rubric for reading a conversation.
-It is a file in this repo, not a hidden prompt, so you can check what the model was told
-and change it.
-
-The reading comes back as ranked signals with the evidence each one rests on, a stated
-confidence with the reason for it, and — always — the strongest case *against* its own
-conclusion. It is shown in a separate panel with an amber badge, because it is inference.
-It is told the arithmetic and instructed never to contradict it.
-
-The rubric's top rule is that a stated boundary ends the analysis. Its second is that most
-conversations fade, and that this is the base rate rather than a verdict.
-
-If no API key is set, this panel simply doesn't appear and the measured signals work as
-before.
+Reply latencies, ratios and initiation counts are computed in your browser and handed to
+the model as reference figures, because models mis-count gaps across dozens of timestamps.
+They are not shown as a separate verdict; the reading is the model's.
 
 ### 3. Three drafts
 Three replies in genuinely different registers, each with a one-line note on what it is doing

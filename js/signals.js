@@ -1,10 +1,10 @@
-/* signals.js — local, deterministic conversation analysis.
- * No model involved. Pure arithmetic on the parsed thread.
- * These are the most trustworthy numbers in the app.
+/* signals.js — parsing plus deterministic measurement of a thread.
+ * These figures are not displayed. They are computed here and handed to the model
+ * as reference, because models mis-count gaps across dozens of timestamps.
  */
 
 import {
-  wilson, decide, mannKendall, inferQuietHours, activeMinutes, logStats, median,
+  wilson, mannKendall, inferQuietHours, activeMinutes, logStats, median,
 } from './stats.js';
 
 export const ME = 'me';
@@ -190,61 +190,6 @@ export function computeSignals(msgs) {
   }
 
   return s;
-}
-
-/* ---------- interest read ---------- */
-
-/**
- * Combine signals into a coarse interest read.
- * Deliberately coarse: three bands, not a score out of 100.
- * A fake precise number would be worse than an honest vague one.
- */
-export function interestRead(s) {
-  const pos = [], neg = [], unknown = [];
-
-  const put = (verdict, good, bad, label) => {
-    if (verdict === null || verdict === undefined) unknown.push(label);
-    else (verdict ? pos : neg).push(verdict ? good : bad);
-  };
-
-  // Proportions are judged by their interval, not their point estimate, so a
-  // threshold is only "crossed" when the uncertainty is on one side of it.
-  put(
-    s.theirQuestionCI ? decide(s.theirQuestionCI, 0.12) : null,
-    'asks you questions',
-    'rarely asks you anything',
-    'question rate'
-  );
-  put(
-    s.initiationCI ? decide(s.initiationCI, 0.3) : null,
-    'starts conversations too',
-    'almost never messages first',
-    'initiation'
-  );
-
-  // Ratios have no interval, so require a margin around the threshold rather
-  // than treating 0.69 and 0.71 as opposite findings.
-  const band3 = (v, t, m) => (v === null || v === undefined ? null : v >= t + m ? true : v <= t - m ? false : null);
-  put(band3(s.volumeRatio, 0.7, 0.15), 'matches your message volume', 'writes noticeably less than you', 'volume');
-  put(band3(s.lengthRatio, 0.8, 0.2), 'writes messages as long as yours', 'replies much shorter than yours', 'length');
-
-  // Trend only counts when Mann-Kendall says it is distinguishable from noise.
-  put(
-    s.latencyTrend === null || s.latencyTrend === undefined ? null : s.latencyTrend < 0,
-    'reply speed is improving',
-    'replies are genuinely slowing down',
-    'latency trend'
-  );
-
-  const decided = pos.length + neg.length;
-  let band;
-  if (decided < 3) band = 'not enough data';
-  else if (pos.length >= 4) band = 'engaged';
-  else if (pos.length > neg.length) band = 'warm but unclear';
-  else if (neg.length > pos.length) band = 'low signal';
-  else band = 'mixed';
-
-  return { band, pos, neg, unknown, decided };
 }
 
 /* ---------- pattern warnings ---------- */
