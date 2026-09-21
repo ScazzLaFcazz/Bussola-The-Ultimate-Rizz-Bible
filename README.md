@@ -52,6 +52,24 @@ Computed in your browser with no model involved:
 
 These are arithmetic on your own thread. They are the most trustworthy numbers in the app.
 
+### 2b. AI reading — against a rubric you can read
+
+Pressing **Analyse** runs the arithmetic first, then sends the thread to your model along
+with [`docs/signals.md`](docs/signals.md) — the full rubric for reading a conversation.
+It is a file in this repo, not a hidden prompt, so you can check what the model was told
+and change it.
+
+The reading comes back as ranked signals with the evidence each one rests on, a stated
+confidence with the reason for it, and — always — the strongest case *against* its own
+conclusion. It is shown in a separate panel with an amber badge, because it is inference.
+It is told the arithmetic and instructed never to contradict it.
+
+The rubric's top rule is that a stated boundary ends the analysis. Its second is that most
+conversations fade, and that this is the base rate rather than a verdict.
+
+If no API key is set, this panel simply doesn't appear and the measured signals work as
+before.
+
 ### 3. Three drafts
 Three replies in genuinely different registers, each with a one-line note on what it is doing
 and when it is the wrong choice:

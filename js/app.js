@@ -7,6 +7,7 @@ import {
 import { PROVIDERS, complete, extractJson } from './providers.js';
 import {
   STAGES, draftSystem, draftUser, matrixSystem, matrixUser,
+  loadRubric, readingSystem, readingUser,
 } from './prompts.js';
 import * as store from './store.js';
 import { wilson, calibration, decide } from './stats.js';
@@ -404,11 +405,12 @@ function barsBlock(s) {
 
 /* ---------------- analysis ---------------- */
 
-function analyse() {
+function analyse({ withAI = false } = {}) {
   const raw = $('convo').value;
   state.msgs = parseConversation(raw);
   if (!state.msgs.length) {
     $('signalsCard').hidden = true;
+    $('aiReadCard').hidden = true;
     updateStatusRack();
     return;
   }
@@ -416,9 +418,88 @@ function analyse() {
   state.patterns = detectPatterns(state.signals, state.msgs);
   renderSignals();
   persist();
+  if (withAI) aiRead();
 }
 
-$('analyze').addEventListener('click', analyse);
+/**
+ * The model's reading, kept in its own panel. The arithmetic runs first and always,
+ * so a missing key or a failed call costs you the interpretation, never the numbers.
+ */
+async function aiRead() {
+  const card = $('aiReadCard');
+  const box = $('aiRead');
+  const c = cfg();
+  if (PROVIDERS[c.provider].needsKey && !c.key) {
+    card.hidden = true;
+    return;
+  }
+
+  const blocked = safetyGate(state.msgs);
+  if (blocked) {
+    card.hidden = false;
+    box.innerHTML = `<div class="gate">${esc(blocked)}</div>`;
+    return;
+  }
+
+  card.hidden = false;
+  box.innerHTML = '<p class="muted small">Reading against the rubric…</p>';
+  try {
+    const rubric = await loadRubric();
+    if (!rubric) {
+      box.innerHTML = '<p class="muted small">Could not load docs/signals.md, so the reading was skipped rather than run without its rubric.</p>';
+      return;
+    }
+    const out = await complete(c, {
+      system: readingSystem(rubric),
+      user: readingUser({
+        conversation: asText(state.msgs),
+        stage: $('stage').value,
+        signals: state.signals,
+        patterns: state.patterns,
+      }),
+      maxTokens: 1800,
+    });
+    renderAIRead(extractJson(out));
+  } catch (e) {
+    box.innerHTML = `<p class="muted small">✗ ${esc(e.message)}</p>`;
+  }
+}
+
+function renderAIRead(j) {
+  const box = $('aiRead');
+  box.innerHTML = '';
+
+  const head = el('div', 'read');
+  head.textContent = j.read || '';
+  box.append(head);
+
+  if (j.confidence) {
+    box.append(el('div', 'tele-row',
+      `<span class="k">Confidence</span><span class="v">${esc(j.confidence)}${j.confidence_why ? ` — ${esc(j.confidence_why)}` : ''}</span>`));
+  }
+
+  for (const s of j.signals || []) {
+    const n = el('div', `ai-signal ${esc(s.verdict || 'neutral')}`);
+    n.innerHTML =
+      `<div class="ai-signal-head">` +
+        `<span class="ai-verdict ${esc(s.verdict || 'neutral')}">${esc(s.verdict || '?')}</span>` +
+        `<b>${esc(s.name || '')}</b>` +
+        `<span class="ai-weight">${esc(s.weight || '')}${s.tier ? ` · tier ${esc(s.tier)}` : ''}</span>` +
+      `</div>` +
+      `<div class="ai-evidence">${esc(s.evidence || '')}</div>`;
+    box.append(n);
+  }
+
+  if (j.counter_reading) {
+    box.append(el('div', 'counter',
+      `<div class="t">The case against this read</div><div>${esc(j.counter_reading)}</div>`));
+  }
+  if (j.watch && j.watch.length) {
+    box.append(el('div', 'muted small', 'Watch for: ' + j.watch.map(esc).join(' · ')));
+  }
+}
+
+$('analyze').addEventListener('click', () => analyse({ withAI: true }));
 $('convo').addEventListener('blur', analyse);
 
 function renderSignals() {

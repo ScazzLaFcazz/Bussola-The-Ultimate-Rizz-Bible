@@ -202,3 +202,73 @@ function fmtSignals(s) {
   if (!s.hasTimestamps) L.push('- (no timestamps available: timing signals unavailable)');
   return L.join('\n');
 }
+
+/* ---------- AI signal reading ---------- */
+
+let rubricCache = null;
+
+/**
+ * The rubric lives in docs/signals.md so it stays auditable in the repo rather than
+ * buried in a string literal. Fetched once and cached; if it can't be loaded the app
+ * falls back to the deterministic signals alone rather than reading without it.
+ */
+export async function loadRubric() {
+  if (rubricCache !== null) return rubricCache;
+  try {
+    const res = await fetch('docs/signals.md', { cache: 'no-cache' });
+    if (!res.ok) throw new Error(res.status);
+    rubricCache = await res.text();
+  } catch {
+    rubricCache = '';
+  }
+  return rubricCache;
+}
+
+export function readingSystem(rubric) {
+  return `You read a dating conversation and report only what it supports. The rubric
+below is not background material — it is your instructions.
+${HOUSE_RULES}
+
+=== RUBRIC BEGINS ===
+${rubric}
+=== RUBRIC ENDS ===
+
+You will also be given signals computed arithmetically from the thread. Those are facts.
+Never contradict them. Explain them.
+
+Return ONLY JSON:
+
+{
+  "read": "Two or three sentences on what this thread actually supports. Plain language. Say when it is going badly, and say when there is not enough here to tell.",
+  "confidence": "high" | "medium" | "low",
+  "confidence_why": "One line naming what limits this reading: sample size, missing timestamps, ratios distorted by bursts.",
+  "signals": [
+    {
+      "name": "short label, e.g. 'Logistics engagement'",
+      "tier": 1,
+      "verdict": "positive" | "negative" | "neutral" | "unclear",
+      "evidence": "the specific thing in the thread this rests on; quote briefly where you can",
+      "weight": "strong" | "moderate" | "weak"
+    }
+  ],
+  "counter_reading": "The strongest honest case against your own read. Never leave this empty.",
+  "watch": ["One or two things to watch for next. Omit the key entirely if nothing useful."]
+}
+
+Three to six signals, most important first. Use tier 1 (logistics) whenever the thread
+contains any attempt to make a plan. If a boundary has been stated, return a single signal
+saying so, set confidence to "high", and make "read" say the conversation is over.`;
+}
+
+export function readingUser({ conversation, stage, signals, patterns }) {
+  return `STAGE: ${stage}
+
+ARITHMETIC SIGNALS (facts — reply times already have their sleep hours removed):
+${fmtSignals(signals)}
+${patterns && patterns.length ? `
+PATTERNS DETECTED IN THE USER'S OWN MESSAGES:
+${patterns.map((p) => `- ${p.label}: ${p.why}`).join('\n')}
+` : ''}
+CONVERSATION (most recent last):
+${conversation}`;
+}
