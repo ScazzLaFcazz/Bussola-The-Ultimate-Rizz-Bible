@@ -22,6 +22,20 @@ const el = (tag, cls, html) => {
 const esc = (s) =>
   String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+const spinner = (label) => `<div class="loading"><span class="spinner"></span>${esc(label)}</div>`;
+
+/** Put a button into a spinner state and hand back the undo. */
+function busy(btn) {
+  const was = btn.textContent;
+  btn.classList.add('loading-btn');
+  btn.disabled = true;
+  return () => {
+    btn.classList.remove('loading-btn');
+    btn.disabled = false;
+    btn.textContent = was;
+  };
+}
+
 let state = { thread: null, msgs: [], signals: null, patterns: [], options: [], picked: null };
 
 /* ---------------- views ---------------- */
@@ -444,7 +458,8 @@ async function aiRead() {
   }
 
   card.hidden = false;
-  box.innerHTML = '<p class="muted small">Reading against the rubric…</p>';
+  box.innerHTML = spinner('Reading the thread against the rubric…');
+  const done = busy($('analyze'));
   try {
     const rubric = await loadRubric();
     if (!rubric) {
@@ -464,6 +479,8 @@ async function aiRead() {
     renderAIRead(extractJson(out));
   } catch (e) {
     box.innerHTML = `<p class="muted small">✗ ${esc(e.message)}</p>`;
+  } finally {
+    done();
   }
 }
 
@@ -515,9 +532,17 @@ $('draft').addEventListener('click', async () => {
   $('options').innerHTML = '';
   $('read').hidden = true;
 
-  if (!state.msgs.length) {
+  const notes = $('notes').value.trim();
+  const opener = !state.msgs.length;
+
+  // No conversation yet is a valid case — it means writing the first message.
+  // But then the context field is the only thing to react to, and specificity
+  // is the whole game, so it becomes required rather than optional.
+  if (opener && !notes) {
     $('gate').hidden = false;
-    $('gate').textContent = 'Paste a conversation first.';
+    $('gate').textContent =
+      'No conversation yet, so this would be a first message. Describe her profile in the context field below — what her photos show, her bio, anything specific. Without it there is nothing to react to, and a generic opener is the kind that gets no reply.';
+    $('notes').focus();
     return;
   }
 
@@ -528,17 +553,18 @@ $('draft').addEventListener('click', async () => {
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Thinking…';
+  const done = busy(btn);
+  $('read').hidden = false;
+  $('read').innerHTML = spinner(opener ? 'Writing three openers…' : 'Drafting three replies…');
   try {
     const out = await complete(cfg(), {
-      system: draftSystem(),
+      system: draftSystem(opener),
       user: draftUser({
-        conversation: asText(state.msgs),
-        stage: $('stage').value,
+        conversation: opener ? '' : asText(state.msgs),
+        stage: opener ? 'matched' : $('stage').value,
         signals: state.signals,
         patterns: state.patterns,
-        notes: $('notes').value,
+        notes,
         lang: store.getConfig().lang,
       }),
       maxTokens: 1600,
@@ -549,11 +575,11 @@ $('draft').addEventListener('click', async () => {
     $('read').innerHTML = `<div class="readout-band">${esc(j.read || '')}</div>`;
     renderOptions();
   } catch (e) {
+    $('read').hidden = true;
     $('gate').hidden = false;
     $('gate').textContent = '✗ ' + e.message;
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Suggest three replies';
+    done();
   }
 });
 
@@ -600,7 +626,7 @@ async function pick(i, node) {
 
   const card = $('matrixCard');
   card.hidden = false;
-  $('matrix').innerHTML = '<p class="muted small">Estimating…</p>';
+  $('matrix').innerHTML = spinner('Estimating how that lands…');
   $('matrixCaveat').textContent = '';
   try {
     const out = await complete(cfg(), {

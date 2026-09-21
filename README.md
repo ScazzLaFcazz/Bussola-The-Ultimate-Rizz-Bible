@@ -52,6 +52,16 @@ Reply latencies, ratios and initiation counts are computed in your browser and h
 the model as reference figures, because models mis-count gaps across dozens of timestamps.
 They are not shown as a separate verdict; the reading is the model's.
 
+### 1b. No conversation yet? Write the first message
+
+Leave the conversation box empty and describe her profile in the context field — what the
+photos show, what the bio says, anything concrete. In that mode the context field is
+**required**, not optional, because it is the only raw material there is.
+
+Openers are then written to react to one specific thing in it, and explicitly not to
+introduce you. Openers that present the sender and wait to be judged are the ones that
+get silence.
+
 ### 3. Three drafts
 Three replies in genuinely different registers, each with a one-line note on what it is doing
 and when it is the wrong choice:

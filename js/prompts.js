@@ -79,10 +79,23 @@ PLAIN WORDS
   their slang level. Do not upgrade their English.
 `;
 
-export function draftSystem() {
+export function draftSystem(opener = false) {
   return `You help someone write their next message in a dating conversation.
 ${HOUSE_RULES}
 ${STYLE_RULES}
+${opener ? `
+THIS IS A FIRST MESSAGE. There is no conversation yet — only a description of her
+profile. That description is the entire raw material, so:
+
+- React to ONE concrete thing in it. A place, a pet, an activity, an object in a photo,
+  something stated in the bio. Name the thing.
+- Do NOT introduce yourself. Openers that present the sender and wait to be evaluated
+  are the ones that get silence. Openers that react to something specific get replies.
+- Do NOT compliment her appearance.
+- One message. Never a greeting followed by a second message.
+- Make it easy to answer. The best opener hands her an obvious reply.
+- If the description mentions something she has explicitly asked for, follow it.
+` : ''}
 
 Return ONLY JSON matching this shape:
 
@@ -115,9 +128,20 @@ THE THREE REGISTERS — make them genuinely different, not one message in three 
 }
 
 export function draftUser({ conversation, stage, signals, patterns, notes, lang }) {
+  if (!conversation) {
+    return `STAGE: matched — no conversation yet. This is the first message.
+
+HER PROFILE, as described by the user:
+${notes}
+
+TARGET LANGUAGE: ${lang || 'English, unless her profile suggests otherwise'}
+
+Write three openers that react to something specific above.`;
+  }
+
   return `STAGE: ${stage}
 
-MEASURED SIGNALS (computed locally from the thread — these are facts, not guesses):
+MEASURED SIGNALS (computed from the thread — these are facts, not guesses):
 ${fmtSignals(signals)}
 
 ${patterns.length ? `PATTERN WARNINGS ALREADY DETECTED:\n${patterns.map((p) => `- ${p.label}: ${p.why} → ${p.advice}`).join('\n')}\n` : ''}

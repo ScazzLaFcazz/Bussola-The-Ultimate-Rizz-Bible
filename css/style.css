@@ -847,3 +847,35 @@ svg .svg-accent-stroke { stroke: var(--accent); }
   font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
   color: var(--muted); font-weight: 700; margin-bottom: 4px;
 }
+
+/* ---------- loading ---------- */
+
+.loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0; color: var(--muted); font-size: 13.5px;
+}
+.spinner {
+  width: 15px; height: 15px; flex-shrink: 0;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn.loading-btn { position: relative; color: transparent; pointer-events: none; }
+.btn.loading-btn::after {
+  content: ''; position: absolute; inset: 0; margin: auto;
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.btn.ghost.loading-btn::after {
+  border-color: var(--line); border-top-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner, .btn.loading-btn::after { animation-duration: 2s; }
+}
