@@ -188,38 +188,127 @@ function renderThreads() {
 /* ---------------- stats (SVG diagrams) ---------------- */
 
 function renderStats() {
-  const s = store.outcomeStats();
   const box = $('stats');
   box.innerHTML = '';
-  if (!s.total) {
-    box.append(el('p', 'muted small', 'Nothing logged yet. Send a draft, then mark whether it got a reply.'));
+  const s = store.outcomeStats();
+  const pending = store.pendingSends();
+  const sends = store.allSends();
+  const pc = (x) => `${Math.round(x * 100)}%`;
+
+  if (!sends.length) {
+    box.append(el('p', 'muted small',
+      'Nothing logged yet. Draft a reply, hit "I sent this", then come back and mark whether it got an answer.'));
     return;
   }
-  const rate = Math.round((s.replied / s.total) * 100);
 
-  // --- donut + bars grid ---
+  /* ---- 1. pending queue: the only actionable panel, so it goes first ---- */
+  if (pending.length) {
+    const c = el('div', 'card');
+    c.innerHTML =
+      `<div class="card-head"><h2>Waiting on an outcome</h2>` +
+      `<span class="badge estimate">${pending.length} unmarked</span></div>` +
+      `<p class="muted small">Every one you mark makes the numbers below mean more.</p>`;
+    const list = el('div', 'pending-list');
+    for (const r of pending.slice(0, 12)) {
+      const row = el('div', 'pending-row');
+      const when = new Date(r.ts);
+      row.innerHTML =
+        `<div class="pending-msg">` +
+          `<div class="pending-meta">${esc(r.threadName)} · ${esc(r.register || '—')} · ${when.toLocaleDateString()} ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>` +
+          `<div class="pending-text">${esc((r.sent || '').slice(0, 120))}</div>` +
+        `</div>`;
+      const actions = el('div', 'pending-actions');
+      const yes = el('button', 'btn mini primary', 'Replied');
+      const no = el('button', 'btn mini ghost', 'No reply');
+      yes.onclick = () => { store.setOutcome(r.threadId, r.ts, 'replied'); renderStats(); };
+      no.onclick = () => { store.setOutcome(r.threadId, r.ts, 'no_reply'); renderStats(); };
+      actions.append(yes, no);
+      row.append(actions);
+      list.append(row);
+    }
+    c.append(list);
+    if (pending.length > 12)
+      c.append(el('p', 'muted small', `${pending.length - 12} more not shown.`));
+    box.append(c);
+  }
+
+  if (!s.total) {
+    box.append(el('p', 'muted small', 'Mark a few outcomes above and the dashboard fills in.'));
+    return;
+  }
+
+  const rate = Math.round((s.replied / s.total) * 100);
+  const overall = wilson(s.replied, s.total);
+
+  /* ---- 2. headline ---- */
+  const head = el('div', 'card');
+  head.innerHTML = `<div class="card-head"><h2>Your reply rate</h2><span class="badge measured">measured</span></div>`;
   const grid = el('div', 'stats-grid');
   grid.append(donutSVG(rate));
   grid.append(barsBlock(s));
-  box.append(grid);
+  head.append(grid);
 
-  // --- telemetry rows ---
   const tele = el('div', 'telemetry');
-  const pc = (x) => `${Math.round(x * 100)}%`;
-  const overall = wilson(s.replied, s.total);
-  tele.append(teleRow('Messages logged', s.total));
+  tele.append(teleRow('Outcomes marked', `${s.total} of ${sends.length}`));
   tele.append(teleRow('Got a reply', `${s.replied} (${rate}%) [${pc(overall.lo)}–${pc(overall.hi)}]`, true));
-  for (const [reg, d] of Object.entries(s.byRegister)) {
-    const ci = wilson(d.replied, d.n);
-    tele.append(teleRow(`${esc(reg)} register`, `${d.replied}/${d.n} [${pc(ci.lo)}–${pc(ci.hi)}]`));
-  }
-  box.append(tele);
+  head.append(tele);
+  box.append(head);
 
-  // --- calibration: is the app's own forecasting any good? ---
+  /* ---- 3. register comparison, with an honest verdict ---- */
+  const regs = Object.entries(s.byRegister).map(([reg, d]) => ({ reg, ...d, ci: wilson(d.replied, d.n) }));
+  if (regs.length > 1) {
+    const c = el('div', 'card');
+    const sorted = [...regs].sort((a, b) => b.ci.p - a.ci.p);
+    const best = sorted[0], worst = sorted[sorted.length - 1];
+    // Only claim a difference when the intervals don't overlap.
+    const separated = best.ci.lo > worst.ci.hi;
+    c.innerHTML =
+      `<div class="card-head"><h2>Which register works</h2>` +
+      `<span class="badge ${separated ? 'measured' : 'estimate'}">${separated ? 'clear difference' : 'too close to call'}</span></div>`;
+    const t = el('div', 'telemetry');
+    for (const r of sorted) {
+      t.append(teleRow(esc(r.reg), `${r.replied}/${r.n} · ${pc(r.ci.p)} [${pc(r.ci.lo)}–${pc(r.ci.hi)}]`, r === best && separated));
+    }
+    c.append(t);
+    c.append(el('p', 'muted small', separated
+      ? `${esc(best.reg)} is genuinely outperforming ${esc(worst.reg)} — the intervals don't overlap.`
+      : `The intervals overlap, so the ranking above is noise so far. Keep logging.`));
+    box.append(c);
+  }
+
+  /* ---- 4. time of day ---- */
+  const hours = store.hourStats();
+  if (hours.length > 1) {
+    const c = el('div', 'card');
+    c.innerHTML = `<div class="card-head"><h2>When you send</h2><span class="badge measured">measured</span></div>`;
+    const block = el('div', 'bars');
+    hours.forEach((h, i) => {
+      const ci = wilson(h.replied, h.n);
+      const r = Math.round(ci.p * 100);
+      const row = el('div', 'bar-row');
+      row.style.animationDelay = `${i * 80}ms`;
+      row.innerHTML =
+        `<span class="bar-label">${esc(h.label)}</span>` +
+        `<span class="bar-track"><span class="bar-fill${r < 40 ? ' low' : ''}" data-w="${r}%"></span></span>` +
+        `<span class="bar-val">${h.replied}/${h.n} · ${r}%</span>`;
+      block.append(row);
+    });
+    c.append(block);
+    const late = hours.find((h) => h.id === 'latenight');
+    if (late && late.n >= 5) {
+      const lateCi = wilson(late.replied, late.n);
+      const rest = hours.filter((h) => h.id !== 'latenight').reduce((a, h) => ({ n: a.n + h.n, replied: a.replied + h.replied }), { n: 0, replied: 0 });
+      const restCi = wilson(rest.replied, rest.n);
+      if (lateCi.hi < restCi.lo)
+        c.append(el('p', 'muted small', 'Late-night messages are measurably doing worse than the rest. Draft them, sleep, send at noon.'));
+    }
+    box.append(c);
+  }
+
+  /* ---- 5. calibration: is the app's own forecasting any good? ---- */
   const cal = calibration(store.predictionRows());
   if (cal) {
     const c = el('div', 'card');
-    c.style.marginTop = '16px';
     const beatsBase = cal.brier < cal.baseline;
     c.innerHTML =
       `<div class="card-head"><h2>Forecast accuracy</h2>` +
@@ -228,28 +317,42 @@ function renderStats() {
       `<b>${cal.baseline.toFixed(3)}</b>. Lower is better; 0.25 is a coin flip.</p>`;
     const t = el('div', 'telemetry');
     for (const [band, d] of Object.entries(cal.byBand)) {
-      t.append(teleRow(
-        `Predicted "${band}"`,
-        `said ${pc(d.predicted)}, actual ${pc(d.actual)} (${d.replied}/${d.n})`
-      ));
+      t.append(teleRow(`Predicted "${band}"`, `said ${pc(d.predicted)}, actual ${pc(d.actual)} (${d.replied}/${d.n})`));
     }
     c.append(t);
-    if (!cal.reliable) {
-      c.append(el('p', 'muted small',
-        `Only ${cal.n} forecasts scored — needs about 30 before this means anything.`));
-    }
+    if (!cal.reliable)
+      c.append(el('p', 'muted small', `Only ${cal.n} forecasts scored — needs about 30 before this means anything.`));
     box.append(c);
   }
 
-  if (s.total < 15) {
-    box.append(el('p', 'muted small', `Only ${s.total} logged — treat these as a hint, not a finding. Differences need a few dozen sends to mean anything.`));
+  /* ---- 6. the log ---- */
+  const logCard = el('div', 'card');
+  logCard.innerHTML = `<div class="card-head"><h2>Recent sends</h2></div>`;
+  const log = el('div', 'pending-list');
+  for (const r of sends.filter((x) => x.outcome).slice(0, 20)) {
+    const when = new Date(r.ts);
+    const row = el('div', 'pending-row');
+    row.innerHTML =
+      `<div class="pending-msg">` +
+        `<div class="pending-meta">${esc(r.threadName)} · ${esc(r.register || '—')} · ${when.toLocaleDateString()}</div>` +
+        `<div class="pending-text">${esc((r.sent || '').slice(0, 120))}</div>` +
+      `</div>` +
+      `<span class="outcome-tag ${r.outcome === 'replied' ? 'ok' : 'no'}">${r.outcome === 'replied' ? 'replied' : 'no reply'}</span>`;
+    const undo = el('button', 'btn mini ghost', 'Undo');
+    undo.title = 'Move back to pending';
+    undo.onclick = () => { store.setOutcome(r.threadId, r.ts, null); renderStats(); };
+    row.append(undo);
+    log.append(row);
   }
+  logCard.append(log);
+  box.append(logCard);
 
-  // animate bars in on next frame
+  if (s.total < 15)
+    box.append(el('p', 'muted small',
+      `Only ${s.total} outcomes marked — treat everything above as a hint, not a finding. Differences need a few dozen sends to mean anything.`));
+
   requestAnimationFrame(() => {
-    box.querySelectorAll('.bar-fill').forEach((b) => {
-      b.style.width = b.dataset.w;
-    });
+    box.querySelectorAll('.bar-fill').forEach((b) => { b.style.width = b.dataset.w; });
   });
 }
 
@@ -573,14 +676,25 @@ function logSend(o) {
   };
   t.history.push(entry);
   store.upsertThread(t);
-
-  const answer = confirm(
-    'Logged.\n\nOK  = she replied\nCancel = no reply (you can change this later by re-logging)'
-  );
-  entry.outcome = answer ? 'replied' : 'no_reply';
-  store.upsertThread(t);
+  // Left pending on purpose: at send time you don't know yet. The dashboard
+  // collects unmarked sends so the outcome data doesn't become guesswork.
+  toast('Logged as pending — mark it in Stats when you know.');
   renderStats();
   updateStatusRack();
+}
+
+let toastTimer;
+function toast(msg) {
+  let t = $('toast');
+  if (!t) {
+    t = el('div', 'toast');
+    t.id = 'toast';
+    document.body.append(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 /* ---------------- status rack (live header) ---------------- */

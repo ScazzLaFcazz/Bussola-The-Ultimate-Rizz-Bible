@@ -90,7 +90,7 @@ Return ONLY JSON matching this shape:
   "read": "One sentence on where this conversation actually is. Be honest, including when it is going badly.",
   "options": [
     {
-      "register": "playful" | "direct" | "sincere",
+      "register": "Flirty" | "Direct" | "Sincere",
       "text": "the message itself, ready to send",
       "does": "one line: what this move does",
       "wrong_when": "one line: when this is the wrong choice"
@@ -99,7 +99,19 @@ Return ONLY JSON matching this shape:
 }
 
 Exactly three options, one of each register. If the honest answer is "send nothing",
-still return three options but make "read" say so clearly.`;
+still return three options but make "read" say so clearly.
+
+THE THREE REGISTERS — make them genuinely different, not one message in three costumes:
+
+  Flirty   Teasing, mock-outrage, playful tension. Accuses her of something small and
+           specific. Creates something she wants to answer. Never a plain compliment.
+
+  Direct   The joke removed. Says the actual thing, or names a day and a place. Short,
+           unhedged, no "maybe" or "if you want". This is the one that gets plans made.
+
+  Sincere  The armour off. Plain language, no bit, no defending. What you would say if
+           you weren't managing how it lands. Usually the shortest of the three, and the
+           right choice far more often than it feels like.`;
 }
 
 export function draftUser({ conversation, stage, signals, patterns, notes, lang }) {

@@ -79,6 +79,70 @@ export function outcomeStats() {
   return { total: logged.length, replied, byRegister };
 }
 
+/** Every logged send across all threads, newest first, with its thread attached. */
+export function allSends() {
+  return getThreads()
+    .flatMap((t) => (t.history || []).map((h) => ({ ...h, threadId: t.id, threadName: t.name })))
+    .sort((a, b) => b.ts - a.ts);
+}
+
+/** Sends you haven't marked yet. These are the ones the dashboard chases you about. */
+export function pendingSends() {
+  return allSends().filter((r) => !r.outcome);
+}
+
+/** Mark a send as replied / no_reply, or back to pending with null. */
+export function setOutcome(threadId, ts, outcome) {
+  const all = getThreads();
+  const t = all.find((x) => x.id === threadId);
+  if (!t) return false;
+  const entry = (t.history || []).find((h) => h.ts === ts);
+  if (!entry) return false;
+  entry.outcome = outcome;
+  t.updated = Date.now();
+  setThreads(all);
+  return true;
+}
+
+export function deleteSend(threadId, ts) {
+  const all = getThreads();
+  const t = all.find((x) => x.id === threadId);
+  if (!t) return false;
+  t.history = (t.history || []).filter((h) => h.ts !== ts);
+  setThreads(all);
+  return true;
+}
+
+/**
+ * Reply rate by hour-of-day sent. Answers a question the profile raises directly:
+ * do messages sent late at night do worse?
+ */
+export function hourStats() {
+  const rows = allSends().filter((r) => r.outcome);
+  const buckets = [
+    { id: 'morning', label: 'Morning 06–12', test: (h) => h >= 6 && h < 12 },
+    { id: 'afternoon', label: 'Afternoon 12–18', test: (h) => h >= 12 && h < 18 },
+    { id: 'evening', label: 'Evening 18–23', test: (h) => h >= 18 && h < 23 },
+    { id: 'latenight', label: 'Late night 23–06', test: (h) => h >= 23 || h < 6 },
+  ].map((b) => ({ ...b, n: 0, replied: 0 }));
+
+  for (const r of rows) {
+    const h = new Date(r.ts).getHours();
+    const b = buckets.find((x) => x.test(h));
+    if (!b) continue;
+    b.n++;
+    if (r.outcome === 'replied') b.replied++;
+  }
+  return buckets.filter((b) => b.n > 0);
+}
+
+/** How many threads sit at each stage — a funnel, not a vanity metric. */
+export function stageStats() {
+  const counts = {};
+  for (const t of getThreads()) counts[t.stage || 'matched'] = (counts[t.stage || 'matched'] || 0) + 1;
+  return counts;
+}
+
 /**
  * Rows where the app predicted a band before you sent, paired with what
  * actually happened. This is what lets the app grade its own forecasts

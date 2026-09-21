@@ -53,8 +53,12 @@ Computed in your browser with no model involved:
 These are arithmetic on your own thread. They are the most trustworthy numbers in the app.
 
 ### 3. Three drafts
-Three replies in different registers — playful, direct, sincere — each with a one-line note on
-what it's doing and when it's the wrong choice.
+Three replies in genuinely different registers, each with a one-line note on what it is doing
+and when it is the wrong choice:
+
+- **Flirty** — teasing, mock-outrage, playful tension. Accuses her of something small and specific.
+- **Direct** — the joke removed. Names a day and a place. This is the one that gets plans made.
+- **Sincere** — the armour off. Plain, no bit, no defending. Right more often than it feels like.
 
 ### 4. Response matrix — clearly labelled as an estimate
 Pick a draft and you get likely response categories with rough likelihood bands and a suggested
@@ -62,7 +66,20 @@ follow-up for each. **These are model estimates, not measurements.** The app lab
 everywhere they appear. Anyone selling you calibrated percentages for one stranger's behaviour
 is selling you a feeling of control.
 
-### 5. Arc tracking
+### 5. Outcome dashboard
+Log what you sent, then mark whether it got an answer — sends start as **pending**, because at
+send time you do not know yet. The Stats tab then shows:
+
+- Reply rate with a confidence interval, not a bare percentage
+- Per-register performance, with an explicit **"too close to call"** when the intervals overlap
+- Reply rate by time of day, which will tell you if late-night sending is costing you
+- **Forecast accuracy** — a Brier score for the response matrix against a base-rate baseline,
+  so you can see whether the estimates are informative or merely confident
+- A log of recent sends, with undo
+
+Once you have logged ten sends, your measured reply rate is passed to the model as a prior.
+
+### 6. Arc tracking
 Stage (matched → talking → plans → met → dating → defining), plus pattern warnings for the
 things that reliably end promising conversations:
 
