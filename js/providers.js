@@ -18,6 +18,16 @@ export const PROVIDERS = {
     defaultModel: 'anthropic/claude-sonnet-4.5',
     note: 'One key, many models.',
   },
+  'ollama-cloud': {
+    label: 'Ollama Cloud (via proxy)',
+    needsKey: true,
+    defaultBase: '',
+    defaultModel: 'gpt-oss:20b',
+    note:
+      'ollama.com sends no CORS headers, so a browser cannot call it directly. ' +
+      'Deploy the worker in worker/, put its URL in Base URL, and put your GATE_TOKEN ' +
+      '(not the Ollama key) in the API key field.',
+  },
   anthropic: {
     label: 'Anthropic',
     needsKey: true,
@@ -43,7 +53,7 @@ export async function complete(cfg, req) {
   const p = cfg.provider;
   if (p === 'anthropic') return anthropic(cfg, req);
   if (p === 'ollama') return ollama(cfg, req);
-  return openaiCompatible(cfg, req); // openai + openrouter
+  return openaiCompatible(cfg, req); // openai + openrouter + ollama-cloud (via the worker)
 }
 
 function userContent(req, style) {

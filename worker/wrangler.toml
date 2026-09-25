@@ -1,0 +1,15 @@
+name = "bussola-ollama-proxy"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+# Secrets are NOT set here. Both are set with `wrangler secret put`, which stores
+# them encrypted on Cloudflare and keeps them out of this file and out of git:
+#
+#   npx wrangler secret put OLLAMA_API_KEY
+#   npx wrangler secret put GATE_TOKEN
+#
+# Optional, and safe to commit: restrict which sites may call the worker.
+# Leave it out entirely to allow any origin — the gate token is the real
+# protection, this is a second layer.
+[vars]
+ALLOWED_ORIGINS = "https://scazzlafcazz.github.io,https://zskallywag.github.io,http://localhost:8080"

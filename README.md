@@ -162,6 +162,7 @@ Other people's messages are other people's. Keep the export local; don't publish
 | Provider | Notes |
 |---|---|
 | Ollama | Local, private. Needs `OLLAMA_ORIGINS` set for browser access |
+| Ollama Cloud | Needs the proxy in [worker/](worker/) — ollama.com blocks browser calls entirely |
 | OpenRouter | Easiest for trying several models |
 | Anthropic | Requires `anthropic-dangerous-direct-browser-access` |
 | OpenAI | Standard browser CORS support |
