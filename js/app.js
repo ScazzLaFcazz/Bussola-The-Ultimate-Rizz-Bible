@@ -7,7 +7,7 @@ import {
 import { PROVIDERS, complete, extractJson } from './providers.js';
 import {
   STAGES, draftSystem, draftUser, matrixSystem, matrixUser,
-  loadRubric, readingSystem, readingUser,
+  loadRubric, loadStyle, readingSystem, readingUser,
 } from './prompts.js';
 import * as store from './store.js';
 import { wilson, calibration } from './stats.js';
@@ -587,8 +587,16 @@ $('draft').addEventListener('click', async () => {
   $('read').hidden = false;
   $('read').innerHTML = spinner(opener ? 'Writing three openers…' : 'Drafting three replies…');
   try {
+    const style = await loadStyle();
+    if (!style) {
+      $('read').hidden = true;
+      $('gate').hidden = false;
+      $('gate').textContent =
+        'Could not load docs/style.md. Drafting was skipped rather than run without the style rules, which would produce generic messages.';
+      return;
+    }
     const out = await complete(cfg(), {
-      system: draftSystem(opener),
+      system: draftSystem(style, opener),
       user: draftUser({
         conversation: opener ? '' : asText(state.msgs),
         stage: opener ? 'matched' : $('stage').value,

@@ -104,6 +104,24 @@ Warnings are advisory. You can ignore them.
 
 ---
 
+## Editing the rules
+
+Two files drive what the model does, both fetched at runtime and both readable:
+
+- [`docs/style.md`](docs/style.md) — how messages are written. Orthography, lexicon,
+  worked examples per register, anti-examples, how the style shifts by stage.
+- [`docs/signals.md`](docs/signals.md) — how a conversation is read.
+
+Edit either and reload; no build step, no code change. If you are adapting Bussola to
+your own voice, `style.md` is the file to rewrite, and the examples matter more than
+the principles.
+
+The house rules — never write to someone who said no, never manufacture urgency,
+nothing involving a minor, never impersonate anyone — deliberately stay in
+`js/prompts.js`. A missing or edited file must not be able to weaken them, and if
+either document fails to load the app refuses to run rather than proceeding with half
+its instructions.
+
 ## What it will not do
 
 Hard-coded refusals, not preferences:
