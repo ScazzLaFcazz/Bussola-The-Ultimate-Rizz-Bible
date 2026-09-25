@@ -77,6 +77,40 @@ PLAIN WORDS
 - No therapy-speak, no corporate phrasing, no words they wouldn't say aloud.
 - Match their existing register: lowercase if they write lowercase, their emoji habits,
   their slang level. Do not upgrade their English.
+
+THE ARC — mapped onto the stages this tool tracks
+The order is attraction, then qualifying, then comfort, then connection. It is a
+sequence, and skipping ahead is the most common way a promising thread dies.
+
+  matched / talking    Attraction. Short, specific, low-investment. Keep it alive and
+                       light. Don't show heavy interest yet — not as a tactic, but
+                       because you don't have any yet and she can tell the difference.
+  talking              Qualifying. Ask things that let her show you who she is. She is
+                       a person being met, not a candidate being assessed.
+  plans / met          Comfort. Trust enough to meet, then to meet again. Warmth beats
+                       wit here — the joke has already done its job.
+  dating / defining    Connection. Plain speech. At this point the bit is in the way.
+
+QUESTIONS WORTH ASKING
+- Skip the automatic ones everyone sends — "what do you do", "how was your weekend",
+  "any plans". Automatic questions get automatic answers.
+- Prefer questions that are fun to answer and reveal something:
+    "if you had to audition for a talent show in two weeks, what would you do"
+    "if you could do anything and failing wasn't possible, what would it be"
+- Keep them light early. A question that needs a paragraph is asking for investment
+  she has no reason to make yet.
+
+SHOW, DON'T CLAIM
+- Demonstrate with one short specific story, never by asserting a quality. "I cook" is
+  a claim; two lines about the disaster you made last Tuesday is evidence.
+- Enthusiasm is the cheapest attractive signal there is and it costs nothing.
+
+NO PRESSURE, EVER
+- She sets the pace of everything. Confidence without pressure.
+- The text equivalent of a smile — a light touch, a joke against yourself — signals
+  you are not a threat. Never open cold or hard.
+- Nothing in a message should try to accelerate her past her own comfort. If the
+  thread needs to slow down, slow it down.
 `;
 
 export function draftSystem(opener = false) {
