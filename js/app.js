@@ -7,7 +7,7 @@ import {
 import { PROVIDERS, complete, extractJson } from './providers.js';
 import {
   STAGES, draftSystem, draftUser, matrixSystem, matrixUser,
-  loadRubric, loadStyle, readingSystem, readingUser,
+  loadRubric, loadStyle, readingSystem, readingUser, visionSystem,
 } from './prompts.js';
 import * as store from './store.js';
 import { wilson, calibration } from './stats.js';
@@ -25,15 +25,18 @@ const esc = (s) =>
 
 const spinner = (label) => `<div class="loading"><span class="spinner"></span>${esc(label)}</div>`;
 
-/** Put a button into a spinner state and hand back the undo. */
+/**
+ * Put a button into a spinner state and hand back the undo.
+ * Deliberately does not touch textContent: the spinner is drawn by CSS, and
+ * assigning textContent would destroy child elements — which silently deleted
+ * the file input inside the screenshot <label>.
+ */
 function busy(btn) {
-  const was = btn.textContent;
   btn.classList.add('loading-btn');
   btn.disabled = true;
   return () => {
     btn.classList.remove('loading-btn');
     btn.disabled = false;
-    btn.textContent = was;
   };
 }
 
@@ -549,6 +552,86 @@ function renderAIRead(j, cached = false) {
 }
 
 $('analyze').addEventListener('click', () => analyse({ withAI: true }));
+
+/* ---------------- screenshots ---------------- */
+
+const toB64 = (file) =>
+  new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+
+$('shot').addEventListener('change', async (e) => {
+  const files = [...(e.target.files || [])];
+  e.target.value = '';
+  if (!files.length) return;
+
+  const status = $('shotStatus');
+  const c = cfg();
+  if (PROVIDERS[c.provider].needsKey && !c.key) {
+    status.textContent = 'Reading screenshots needs a vision-capable model. Add an API key in Settings.';
+    return;
+  }
+
+  const done = busy($('shotLabel'));
+  const lines = [];
+  let profile = '';
+  let failed = 0;
+
+  try {
+    // Sequential rather than parallel: several images at once will rate-limit on
+    // most providers, and the ordering matters for what gets appended.
+    for (let i = 0; i < files.length; i++) {
+      status.textContent = files.length > 1
+        ? `Reading screenshot ${i + 1} of ${files.length}…`
+        : 'Reading the screenshot…';
+      try {
+        const b64 = await toB64(files[i]);
+        const out = await complete(c, {
+          system: visionSystem(),
+          user: 'Transcribe this screenshot.',
+          image: { mime: files[i].type || 'image/png', b64 },
+          maxTokens: 2000,
+        });
+        const j = extractJson(out);
+        for (const m of j.messages || []) {
+          if (!m.text) continue;
+          lines.push(`${m.who === 'me' ? 'me' : 'her'}: ${m.text}`);
+        }
+        if (j.profile) profile += (profile ? '\n' : '') + j.profile;
+      } catch (err) {
+        failed++;
+        console.warn('screenshot failed:', err.message);
+      }
+    }
+
+    // A profile screenshot belongs in the context field — that is what the
+    // first-message flow reads from.
+    if (profile) {
+      const notes = $('notes');
+      notes.value = notes.value ? `${notes.value} ${profile}` : profile;
+    }
+    if (lines.length) {
+      const box = $('convo');
+      box.value = box.value.trim() ? `${box.value.trimEnd()}\n${lines.join('\n')}` : lines.join('\n');
+    }
+
+    const parts = [];
+    if (lines.length) parts.push(`${lines.length} message${lines.length === 1 ? '' : 's'} added`);
+    if (profile) parts.push('profile added to context');
+    if (failed) parts.push(`${failed} image${failed === 1 ? '' : 's'} could not be read`);
+    if (!parts.length) parts.push('Nothing readable found in that image');
+
+    status.textContent = parts.join(' · ') +
+      (lines.length ? '. Check the text — transcription is not perfect.' : '.');
+
+    if (lines.length || profile) analyse();
+  } finally {
+    done();
+  }
+});
 $('convo').addEventListener('blur', analyse);
 
 

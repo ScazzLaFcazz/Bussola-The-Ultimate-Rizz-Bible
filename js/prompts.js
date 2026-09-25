@@ -269,3 +269,29 @@ ${patterns.map((p) => `- ${p.label}: ${p.why}`).join('\n')}
 CONVERSATION (most recent last):
 ${conversation}`;
 }
+
+/* ---------- screenshot transcription ---------- */
+
+/* Stays in code rather than a docs/*.md file: signals.md is how to read a thread and
+ * style.md is how to write one, but this is mechanical transcription. There is no
+ * editorial judgement here to expose. */
+export function visionSystem() {
+  return `You transcribe messaging or dating-app screenshots into plain text.
+
+Output ONLY JSON:
+{ "messages": [ { "who": "me" | "them", "text": "...", "time": "HH:MM or null" } ] }
+
+Rules:
+- Right-aligned or accent-coloured bubbles are the user ("me"); left-aligned or grey
+  bubbles are the other person ("them"). If alignment is ambiguous, use colour.
+- Preserve the original wording, spelling, typos, capitalisation and emoji EXACTLY.
+  Do not correct anything. The imperfections are the data.
+- Include timestamps when they are visible, otherwise null.
+- Ignore interface chrome: status bar, battery, headers, navigation, keyboards,
+  reaction badges, "delivered"/"read" markers, typing indicators.
+- Transcribe in the order they appear, top to bottom.
+- If the image is a PROFILE rather than a conversation, return an empty messages array
+  and put the profile text in "profile" instead:
+  { "messages": [], "profile": "name, age, bio text, what the photos show" }
+- If the image contains no readable messages or profile, return { "messages": [] }.`;
+}

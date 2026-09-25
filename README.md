@@ -36,7 +36,14 @@ Bussola is built around three things that actually move outcomes:
 ## What it does
 
 ### 1. Read the conversation
-Paste the text. It is parsed locally in your browser.
+Paste the text, or drop in screenshots. Pasted text is parsed locally in your browser;
+screenshots go to a vision-capable model of your choosing, which transcribes them
+without correcting spelling or typos.
+
+Several screenshots at once are read in order and appended, so a conversation spread
+across three images arrives as one thread. A screenshot of a **profile** rather than a
+conversation lands in the context field instead — which is exactly what the first-message
+mode reads from.
 
 ### 2. Signals — read by the model
 

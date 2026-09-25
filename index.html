@@ -58,10 +58,15 @@ Writing a first message? Leave this empty and describe
 her profile in the context field below instead."></textarea>
 
         <div class="row wrap">
+          <label class="btn ghost" id="shotLabel">
+            Screenshot
+            <input type="file" id="shot" accept="image/*" multiple hidden />
+          </label>
           <button id="analyze" class="btn ghost">Analyse</button>
           <input id="notes" class="mini grow"
             placeholder="Context — required for a first message: describe her profile" />
         </div>
+        <div id="shotStatus" class="muted small"></div>
       </div>
 
       <div class="card panel" id="aiReadCard" data-panel="signals" hidden>
