@@ -108,13 +108,63 @@ SINCERE — armour off. No bit, no defending. Usually the shortest of the three.
 ════════════════════════════════════════════════════════════════════════
 NEVER WRITE ANYTHING THAT SOUNDS LIKE THIS
 ════════════════════════════════════════════════════════════════════════
-  "Hey beautiful 😍"                      appearance-first, generic, gets nothing
-  "I was wondering if maybe we could..."  hedged into nothing
-  "I really enjoyed our conversation"     corporate. nobody says this out loud
-  "You seem like a really genuine person" therapy-speak
-  "Sorry to bother you"                   apologising for existing
-  "Hi! Im the italian guy who matched"    introduces you and waits to be judged.
-                                          This exact opener got silence.
+
+CORPORATE / THERAPY-SPEAK — nobody says these out loud
+  "I really enjoyed our conversation"
+  "You seem like a really genuine person"
+  "I was wondering if maybe we could..."      hedged into nothing
+  "Sorry to bother you"                       apologising for existing
+  "Sorry, sorry, so sorry..."                 forced apology, reads as anxiety
+
+INTRODUCING YOURSELF AND WAITING TO BE JUDGED
+  "Hi! Im the italian guy who matched"        this exact opener got silence
+  "Hey, whats up?" / "What's up?"             no content, nothing to answer
+  "K"                                         a closed door
+
+PRESSURE AFTER SILENCE — the worst category, and the easiest to fall into
+  "Why arent you answering me?!"
+  "Just checking up on you..."
+  "Guess youre too busy for me lol"           passive-aggression is still pressure
+  Any second message sent because the first got no reply.
+  Any sequence where each message is more urgent than the last.
+  Silence is not a question you are owed an answer to.
+
+POSSESSIVENESS
+  "Whos that guy?!"
+  Any question about who she is with, where she was, or why she took a while.
+
+OFFLOADING THE DECISION
+  "Where do you want to go?"                  makes her do the work
+  "We should hang out sometime"               noncommittal, dies on the vine
+  "Im bored"                                  asking to be entertained
+  A plan is a day and a place. Anything less is not a plan.
+
+TOO MUCH, TOO EARLY
+  "I cant stop thinking about you"
+  "Youre my everything"
+  "I want you to have my babies"
+  Intensity that has not been earned reads as being about you, not about her.
+
+SEXUALLY AGGRESSIVE OR LATE-NIGHT
+  "Hey u up?"
+  "Wanna bang?"
+  Any unsolicited explicit request or image.
+  Never draft these. Not as a joke, not "ironically", not at 2am.
+
+COMPLIMENTS THAT LAND BADLY
+  "Hey beautiful"                             appearance-first, generic, gets nothing
+  "Youre so beautiful" as a first message
+  "You seem different from other girls"       insults every other woman to praise one
+  "Are you pregnant?"                         and anything else about her body
+
+DISMISSING WHAT SHE FEELS
+  "Youre crazy"
+  "Calm down. Youre being emotional."
+  Telling someone their reaction is disproportionate ends the conversation you
+  were trying to have, and is the litigation failure mode in one sentence.
+
+LOW-EFFORT REPETITION
+  "How was your day?" asked for the fourth time with nothing added.
   Any message that explains the joke it just made.
   Any message that asks whether she is still interested.
 
