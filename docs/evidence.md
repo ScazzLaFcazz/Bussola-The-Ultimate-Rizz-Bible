@@ -38,6 +38,30 @@ of control, not a measurement.
 
 ---
 
+## Determinism
+
+A language model asked the same question twice does not have to answer the same way.
+Bussola narrows that in three places:
+
+**Greedy decoding.** Every request is sent with `temperature: 0`, `top_p: 1` and a fixed
+seed where the provider honours one. Left at the default of 1.0, the same thread analysed
+twice comes back with different signals and different wording.
+
+**A closed vocabulary.** The model may not invent signal names. It picks from a fixed
+table — Boundary stated, Logistics engagement, Questions about you, Initiation,
+Reciprocity of effort, Deceleration — each with a fixed tier. Free-form labels make two
+readings of the same thread impossible to compare.
+
+**Caching.** Temperature 0 makes a model mostly repeatable, not guaranteed: providers batch
+requests across varying hardware, and floating-point reduction order shifts with batch
+composition, so ties can break differently. Readings and response matrices are therefore
+cached on a hash of the exact input. Analysing the same thread twice returns the identical
+stored answer without calling the model at all. Editing the conversation, changing stage or
+switching model invalidates it, as does bumping the prompt version when the rubric changes.
+
+Drafts are deliberately *not* cached: asking for another set of three options is a
+reasonable thing to want, and that is the one place variation is a feature.
+
 ## On gender and emotion
 
 A reasonable question: why doesn't this model "how women think"?

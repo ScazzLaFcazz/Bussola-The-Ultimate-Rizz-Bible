@@ -11,6 +11,7 @@ import {
 } from './prompts.js';
 import * as store from './store.js';
 import { wilson, calibration } from './stats.js';
+import { cacheKey, cacheGet, cacheSet, cacheClear, cacheSize } from './cache.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -117,9 +118,19 @@ $('export').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 
+$('clearCache').addEventListener('click', () => {
+  const n = cacheSize();
+  cacheClear();
+  $('saveStatus').textContent = n
+    ? `Cleared ${n} cached reading${n === 1 ? '' : 's'}.`
+    : 'Cache was already empty.';
+  setTimeout(() => ($('saveStatus').textContent = ''), 2500);
+});
+
 $('wipe').addEventListener('click', () => {
   if (!confirm('Delete every thread, note and your API key from this browser?')) return;
   store.wipeAll();
+  cacheClear();
   location.reload();
 });
 
@@ -457,6 +468,19 @@ async function aiRead() {
     return;
   }
 
+  const convo = asText(state.msgs);
+  const stage = $('stage').value;
+  const key = cacheKey(['read', c.model, stage, convo]);
+
+  // Same thread, same stage, same model: reuse the stored reading rather than
+  // asking again and risking a differently-worded answer to an identical question.
+  const hit = cacheGet(key);
+  if (hit) {
+    card.hidden = false;
+    renderAIRead(hit, true);
+    return;
+  }
+
   card.hidden = false;
   box.innerHTML = spinner('Reading the thread against the rubric…');
   const done = busy($('analyze'));
@@ -469,14 +493,16 @@ async function aiRead() {
     const out = await complete(c, {
       system: readingSystem(rubric),
       user: readingUser({
-        conversation: asText(state.msgs),
-        stage: $('stage').value,
+        conversation: convo,
+        stage,
         signals: state.signals,
         patterns: state.patterns,
       }),
       maxTokens: 1800,
     });
-    renderAIRead(extractJson(out));
+    const parsed = extractJson(out);
+    cacheSet(key, parsed);
+    renderAIRead(parsed);
   } catch (e) {
     box.innerHTML = `<p class="muted small">✗ ${esc(e.message)}</p>`;
   } finally {
@@ -484,13 +510,17 @@ async function aiRead() {
   }
 }
 
-function renderAIRead(j) {
+function renderAIRead(j, cached = false) {
   const box = $('aiRead');
   box.innerHTML = '';
 
   const head = el('div', 'read');
   head.textContent = j.read || '';
   box.append(head);
+
+  if (cached) {
+    box.append(el('div', 'muted small', 'Same thread as last time — showing the stored reading. Edit the conversation to re-run it.'));
+  }
 
   if (j.confidence) {
     box.append(el('div', 'tele-row',
@@ -626,13 +656,22 @@ async function pick(i, node) {
 
   const card = $('matrixCard');
   card.hidden = false;
-  $('matrix').innerHTML = spinner('Estimating how that lands…');
   $('matrixCaveat').textContent = '';
+
+  const convo = asText(state.msgs);
+  const key = cacheKey(['matrix', cfg().model, $('stage').value, convo, state.picked.text]);
+  const hit = cacheGet(key);
+  if (hit) {
+    renderMatrix(hit);
+    return;
+  }
+
+  $('matrix').innerHTML = spinner('Estimating how that lands…');
   try {
     const out = await complete(cfg(), {
       system: matrixSystem(),
       user: matrixUser({
-        conversation: asText(state.msgs),
+        conversation: convo,
         chosen: state.picked.text,
         stage: $('stage').value,
         signals: state.signals,
@@ -641,30 +680,35 @@ async function pick(i, node) {
       maxTokens: 1400,
     });
     const j = extractJson(out);
-    $('matrixCaveat').textContent = j.caveat || '';
-
-    // Record what was forecast, so the app can be graded against reality later.
-    // Reply probability is read off the "no reply" row rather than invented.
-    const noReply = (j.outcomes || []).find((o) => /no reply|no response|silence|ignore/i.test(o.response || ''));
-    state.predictedBand = !noReply
-      ? 'likely'
-      : { likely: 'unlikely', possible: 'possible', unlikely: 'likely' }[noReply.band] || null;
-
-    const box = $('matrix');
-    box.innerHTML = '';
-    let oi = 0;
-    for (const o of j.outcomes || []) {
-      const n = el('div', 'out');
-      n.style.animationDelay = `${oi * 60}ms`;
-      n.innerHTML =
-        `<div><span class="band ${esc(o.band)}">${esc(o.band)}</span><b>${esc(o.response)}</b></div>` +
-        `<div class="ex">“${esc(o.example || '')}”</div>` +
-        `<div class="mv">${esc(o.means || '')} <b>→</b> ${esc(o.your_move || '')}</div>`;
-      box.append(n);
-      oi++;
-    }
+    cacheSet(key, j);
+    renderMatrix(j);
   } catch (e) {
     $('matrix').innerHTML = `<p class="muted small">✗ ${esc(e.message)}</p>`;
+  }
+}
+
+function renderMatrix(j) {
+  $('matrixCaveat').textContent = j.caveat || '';
+
+  // Record what was forecast, so the app can be graded against reality later.
+  // Reply probability is read off the "no reply" row rather than invented.
+  const noReply = (j.outcomes || []).find((o) => /no reply|no response|silence|ignore/i.test(o.response || ''));
+  state.predictedBand = !noReply
+    ? 'likely'
+    : { likely: 'unlikely', possible: 'possible', unlikely: 'likely' }[noReply.band] || null;
+
+  const box = $('matrix');
+  box.innerHTML = '';
+  let oi = 0;
+  for (const o of j.outcomes || []) {
+    const n = el('div', 'out');
+    n.style.animationDelay = `${oi * 60}ms`;
+    n.innerHTML =
+      `<div><span class="band ${esc(o.band)}">${esc(o.band)}</span><b>${esc(o.response)}</b></div>` +
+      `<div class="ex">“${esc(o.example || '')}”</div>` +
+      `<div class="mv">${esc(o.means || '')} <b>→</b> ${esc(o.your_move || '')}</div>`;
+    box.append(n);
+    oi++;
   }
 }
 

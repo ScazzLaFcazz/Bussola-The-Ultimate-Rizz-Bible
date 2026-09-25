@@ -281,7 +281,22 @@ Return ONLY JSON:
 
 Three to six signals, most important first. Use tier 1 (logistics) whenever the thread
 contains any attempt to make a plan. If a boundary has been stated, return a single signal
-saying so, set confidence to "high", and make "read" say the conversation is over.`;
+saying so, set confidence to "high", and make "read" say the conversation is over.
+
+CLOSED VOCABULARY — "name" and "tier" must come from this table, copied exactly. Do not
+invent names, reword them, or reassign tiers. Two readings of the same thread have to be
+comparable, and free-form labels make that impossible.
+
+  name                      tier
+  ------------------------- ----
+  "Boundary stated"           0
+  "Logistics engagement"      1
+  "Questions about you"       2
+  "Initiation"                3
+  "Reciprocity of effort"     4
+  "Deceleration"              4
+
+Omit any signal the thread has no evidence for. Never emit the same name twice.`;
 }
 
 export function readingUser({ conversation, stage, signals, patterns }) {

@@ -60,6 +60,14 @@ function userContent(req, style) {
   ];
 }
 
+/* Greedy decoding everywhere. Left at the provider default of 1.0, the same
+ * thread analysed twice comes back with different signals and wording; at 0 the
+ * model takes the highest-probability token every step. This is the single
+ * largest determinism lever in the app. SEED pins the tie-breaks on the
+ * providers that honour it (Anthropic has no seed parameter). */
+const TEMPERATURE = 0;
+const SEED = 7;
+
 async function anthropic(cfg, req) {
   const res = await fetch(`${cfg.base}/messages`, {
     method: 'POST',
@@ -72,6 +80,7 @@ async function anthropic(cfg, req) {
     body: JSON.stringify({
       model: cfg.model,
       max_tokens: req.maxTokens || 2000,
+      temperature: TEMPERATURE,
       system: req.system,
       messages: [{ role: 'user', content: userContent(req, 'anthropic') }],
     }),
@@ -95,6 +104,9 @@ async function openaiCompatible(cfg, req) {
     body: JSON.stringify({
       model: cfg.model,
       max_tokens: req.maxTokens || 2000,
+      temperature: TEMPERATURE,
+      top_p: 1,
+      seed: SEED,
       messages: [
         { role: 'system', content: req.system },
         { role: 'user', content: userContent(req, 'openai') },
@@ -114,6 +126,7 @@ async function ollama(cfg, req) {
     body: JSON.stringify({
       model: cfg.model,
       stream: false,
+      options: { temperature: TEMPERATURE, top_p: 1, seed: SEED },
       messages: [{ role: 'system', content: req.system }, msg],
     }),
   });

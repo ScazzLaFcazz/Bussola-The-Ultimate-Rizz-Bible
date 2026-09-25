@@ -151,8 +151,13 @@ her profile in the context field below instead."></textarea>
       Everything lives in this browser's localStorage. Your key is sent only to the provider
       you chose. There is no backend and no analytics.
     </p>
+    <p class="muted small">
+      Readings are cached, so analysing the same thread twice gives the same answer instead
+      of a re-worded one. Clearing the cache makes the next Analyse call the model again.
+    </p>
     <div class="row">
       <button id="export" class="btn ghost">Export JSON</button>
+      <button id="clearCache" class="btn ghost">Clear cache</button>
       <button id="wipe" class="btn danger">Delete everything</button>
     </div>
   </div>
